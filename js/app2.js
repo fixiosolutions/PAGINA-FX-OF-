@@ -2276,22 +2276,42 @@ function handleLoginSubmit(event) {
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass = document.getElementById('loginPass').value.trim();
 
-  const user = registeredUsers.find(u => u.email.toLowerCase() === email && u.pass === pass);
+  // Search existing registered account
+  let user = registeredUsers.find(u => u.email.toLowerCase() === email);
 
   if (user) {
-    currentUser = user;
-    localStorage.setItem('fixio_user', JSON.stringify(currentUser));
-    renderHeaderAuth();
-    closeAuthModal();
-    showToast(`¡Bienvenido de nuevo, ${currentUser.name}!`);
-
-    if (authIntent === 'checkout_required') {
-      openCheckoutModal();
-    } else if (authIntent === 'admin_required' && currentUser.role === 'admin') {
-      openAdminModal();
+    if (user.pass && user.pass !== pass) {
+      showToast('⚠️ Contraseña incorrecta para este correo. Intenta de nuevo.');
+      return;
     }
   } else {
-    showToast('Correo o contraseña incorrectos. Revisa tus datos e intenta de nuevo.');
+    // New email user: create seamless customer account instantly
+    const userName = email.split('@')[0].replace(/[._-]/g, ' ');
+    const formattedName = userName.charAt(0).toUpperCase() + userName.slice(1);
+
+    user = {
+      name: formattedName || 'Cliente FIXIO',
+      email: email,
+      pass: pass,
+      role: 'customer',
+      address: 'Bogotá, Colombia',
+      phone: '300 000 0000'
+    };
+    registeredUsers.push(user);
+    localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
+  }
+
+  currentUser = user;
+  localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+
+  renderHeaderAuth();
+  closeAuthModal();
+  showToast(`🎉 ¡Bienvenido a FIXIO Solutions, ${currentUser.name}!`);
+
+  if (authIntent === 'checkout_required') {
+    openCheckoutModal();
+  } else if (authIntent === 'admin_required' && currentUser.role === 'admin') {
+    openAdminModal();
   }
 }
 

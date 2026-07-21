@@ -1127,15 +1127,25 @@ function openProductDetail(productId) {
 
   selectedReviewRating = 5; // default 5 stars
 
+  const isAdmin = currentUser && currentUser.role === 'admin';
+
+  const mainImageHtml = product.imgUrl 
+    ? `<img src="${product.imgUrl}" alt="${product.name}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:12px;" />`
+    : product.svgIcon;
+
+  const mainThumbHtml = product.imgUrl 
+    ? `<img src="${product.imgUrl}" alt="Vista principal" style="width:100%; height:100%; object-fit:cover; border-radius:4px;" />`
+    : product.svgIcon;
+
   container.innerHTML = `
     <div class="product-detail-grid">
       <div class="detail-gallery">
         <div class="gallery-main-view" id="mainGalleryView">
-          ${product.svgIcon}
+          ${mainImageHtml}
         </div>
         <div class="gallery-thumbs">
           <div class="thumb-item active" onclick="switchDetailThumb(this, '${product.id}', 'front')">
-            ${product.svgIcon}
+            ${mainThumbHtml}
           </div>
           <div class="thumb-item" onclick="switchDetailThumb(this, '${product.id}', 'app')">
             <svg viewBox="0 0 100 100" width="40"><rect width="60" height="90" rx="8" x="20" y="5" fill="#3B82F6"/><circle cx="50" cy="80" r="4" fill="#FFF"/></svg>
@@ -1175,19 +1185,24 @@ function openProductDetail(productId) {
           <div class="info">
             <span class="icon-pdf">📄</span>
             <div>
-              <h4>Manual Oficial de Usuario (PDF)</h4>
-              <p>Guía paso a paso en español con configuración Wi-Fi y limpieza</p>
+              <h4>Ficha Técnica / Manual Oficial (PDF)</h4>
+              <p>Guía paso a paso en español con especificaciones técnicas</p>
             </div>
           </div>
-          <button class="btn btn-outline" onclick="downloadManualPdf('${product.name}')" style="padding: 6px 12px; font-size: 0.8rem; background:#FFF;">
+          <button class="btn btn-outline" onclick="downloadManualPdf('${product.id}', '${product.name}')" style="padding: 6px 12px; font-size: 0.8rem; background:#FFF;">
             ⬇️ Descargar
           </button>
         </div>
 
-        <div style="display:flex; gap:12px; margin-top:20px;">
-          <button class="btn btn-accent" onclick="addToCart('${product.id}'); closeProductDetail();" style="flex:1;">
+        <div style="display:flex; gap:12px; margin-top:20px; flex-wrap: wrap;">
+          <button class="btn btn-accent" onclick="addToCart('${product.id}'); closeProductDetail();" style="flex:1; min-width: 200px;">
             🛒 Agregar al Carrito — $${formatNumber(product.price)}
           </button>
+          ${isAdmin ? `
+            <button class="btn btn-outline" onclick="adminEditFromDetail('${product.id}')" style="flex:1; border-color:var(--primary); color:var(--primary-dark); font-weight:600; min-width: 200px;">
+              ✏️ Editar Producto (Admin)
+            </button>
+          ` : ''}
         </div>
       </div>
     </div>
@@ -1277,20 +1292,47 @@ function closeProductDetail() {
 }
 
 function switchDetailThumb(thumbElem, productId, viewType) {
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+
+  const mainView = document.getElementById('mainGalleryView');
+  if (!mainView) return;
+
   document.querySelectorAll('.thumb-item').forEach(t => t.classList.remove('active'));
   thumbElem.classList.add('active');
+
+  if (viewType === 'front') {
+    mainView.innerHTML = product.imgUrl 
+      ? `<img src="${product.imgUrl}" alt="${product.name}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:12px;" />`
+      : product.svgIcon;
+  } else if (viewType === 'app') {
+    mainView.innerHTML = `<svg viewBox="0 0 200 200" width="180" height="180"><rect x="40" y="20" width="120" height="160" rx="16" fill="#1E293B"/><rect x="50" y="35" width="100" height="110" rx="8" fill="#3B82F6"/><circle cx="100" cy="160" r="10" fill="#FFF"/><path d="M70 60 H130" stroke="#FFF" stroke-width="4"/><path d="M70 80 H110" stroke="#FFF" stroke-width="4"/></svg>`;
+  } else if (viewType === 'usb') {
+    mainView.innerHTML = `<svg viewBox="0 0 200 200" width="180" height="180"><rect x="70" y="40" width="60" height="120" rx="10" fill="#F97316"/><rect x="80" y="10" width="40" height="30" fill="#E2E8F0"/><line x1="90" y1="20" x2="90" y2="25" stroke="#94A3B8" stroke-width="4"/><line x1="110" y1="20" x2="110" y2="25" stroke="#94A3B8" stroke-width="4"/></svg>`;
+  }
 }
 
-function downloadManualPdf(productName) {
-  showToast(`Iniciando descarga del manual PDF para ${productName}...`);
-  // Mock download link trigger
-  const link = document.createElement('a');
-  link.href = '#';
-  link.onclick = (e) => {
-    e.preventDefault();
+function downloadManualPdf(productId, productName) {
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (product && product.manualPdfUrl) {
+    showToast(`Iniciando descarga de ficha técnica / manual para ${productName}...`);
+    const link = document.createElement('a');
+    link.href = product.manualPdfUrl;
+    link.download = `Manual_Ficha_Tecnica_${productName.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    showToast(`Iniciando descarga del manual PDF para ${productName}...`);
     alert(`📄 [Manual PDF FIXIO] Descarga completada:\n"Manual Oficial de Instrucciones - ${productName} (ESPAÑOL).pdf"`);
-  };
-  link.click();
+  }
+}
+
+function adminEditFromDetail(productId) {
+  closeProductDetail();
+  openAdminModal();
+  switchAdminTab('products');
+  showEditProductForm(productId);
 }
 
 // ADMIN DASHBOARD CONTROLLER (RESTRICTED TO ADMIN ROLE ONLY)
@@ -1648,8 +1690,40 @@ function switchAdminTab(tabName) {
               <input type="text" id="editProdBadge" class="form-control" placeholder="ej: Más Vendido, Popular">
             </div>
             <div style="grid-column:1/-1;">
-              <label style="font-size:0.8rem; font-weight:600;">Ruta de Imagen</label>
+              <label style="font-size:0.8rem; font-weight:600;">Ruta / URL de la Imagen (Manual o Externa)</label>
               <input type="text" id="editProdImgUrl" class="form-control" placeholder="MATERIAL/img-fx001.png">
+            </div>
+
+            <!-- Drag and Drop Image & PDF Uploader -->
+            <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+              <div>
+                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Subir Imagen (Arrastrar o Buscar)</label>
+                <div class="upload-dropzone" id="editProdImgDropzone" onclick="document.getElementById('editProdImgFile').click()" 
+                     ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                     ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                     ondrop="handleDropEvent(event, this)"
+                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                  <span style="font-size: 1.5rem;">🖼️</span>
+                  <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir imagen</p>
+                  <input type="file" id="editProdImgFile" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'editProdImgPreview', 'editProdImgUrl')">
+                </div>
+                <div id="editProdImgPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+              </div>
+
+              <div>
+                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Ficha Técnica / Manual (PDF)</label>
+                <div class="upload-dropzone" id="editProdPdfDropzone" onclick="document.getElementById('editProdPdfFile').click()" 
+                     ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                     ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                     ondrop="handleDropEvent(event, this)"
+                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                  <span style="font-size: 1.5rem;">📄</span>
+                  <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir PDF</p>
+                  <input type="file" id="editProdPdfFile" accept="application/pdf" style="display:none;" onchange="handleFileSelect(this, 'editProdPdfPreview', 'editProdPdfData')">
+                </div>
+                <input type="hidden" id="editProdPdfData">
+                <div id="editProdPdfPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+              </div>
             </div>
           </div>
           <div>
@@ -1679,7 +1753,41 @@ function switchAdminTab(tabName) {
             <input type="number" id="newProdStock" placeholder="Stock Inicial (ej. 15)" class="form-control" min="0" value="15" required>
             <input type="number" id="newProdPrice" placeholder="Precio ($ COP)" class="form-control" required>
             <input type="text" id="newProdBadge" placeholder="Etiqueta (ej: Nuevo, Novedad)" class="form-control">
+            <input type="text" id="newProdImgUrl" placeholder="Ruta de Imagen (Opcional)" class="form-control">
           </div>
+
+          <!-- New Drag and Drop Image & PDF Uploader -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Subir Imagen (Arrastrar o Buscar)</label>
+              <div class="upload-dropzone" id="newProdImgDropzone" onclick="document.getElementById('newProdImgFile').click()" 
+                   ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                   ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                   ondrop="handleDropEvent(event, this)"
+                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                <span style="font-size: 1.5rem;">🖼️</span>
+                <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir imagen</p>
+                <input type="file" id="newProdImgFile" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'newProdImgPreview', 'newProdImgUrl')">
+              </div>
+              <div id="newProdImgPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+            </div>
+
+            <div>
+              <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Ficha Técnica / Manual (PDF)</label>
+              <div class="upload-dropzone" id="newProdPdfDropzone" onclick="document.getElementById('newProdPdfFile').click()" 
+                   ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                   ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                   ondrop="handleDropEvent(event, this)"
+                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                <span style="font-size: 1.5rem;">📄</span>
+                <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir PDF</p>
+                <input type="file" id="newProdPdfFile" accept="application/pdf" style="display:none;" onchange="handleFileSelect(this, 'newProdPdfPreview', 'newProdPdfData')">
+              </div>
+              <input type="hidden" id="newProdPdfData">
+              <div id="newProdPdfPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+            </div>
+          </div>
+
           <textarea id="newProdDesc" placeholder="Descripción corta del producto y beneficios" class="form-control" style="margin-top:10px;" required></textarea>
           <div style="display:flex; gap:10px; margin-top:12px;">
             <button type="submit" class="btn btn-accent" style="padding:8px 16px; font-size:0.85rem;">Guardar e Insertar en Tienda</button>
@@ -2087,8 +2195,81 @@ function showEditProductForm(productId) {
   document.getElementById('editProdImgUrl').value = product.imgUrl || '';
   document.getElementById('editProdDesc').value = product.desc;
 
+  const imgPreview = document.getElementById('editProdImgPreview');
+  if (imgPreview) {
+    if (product.imgUrl) {
+      imgPreview.innerHTML = `
+        <img src="${product.imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />
+        <span style="font-size:0.8rem; color:var(--success); font-weight:600;">✓ Imagen cargada</span>
+      `;
+    } else {
+      imgPreview.innerHTML = '';
+    }
+  }
+
+  document.getElementById('editProdPdfData').value = product.manualPdfUrl || '';
+  const pdfPreview = document.getElementById('editProdPdfPreview');
+  if (pdfPreview) {
+    if (product.manualPdfUrl) {
+      pdfPreview.innerHTML = `
+        <span style="font-size:1.2rem;">📄</span>
+        <span style="font-size:0.8rem; color:var(--success); font-weight:600;">✓ PDF cargado</span>
+      `;
+    } else {
+      pdfPreview.innerHTML = '';
+    }
+  }
+
   container.style.display = 'block';
   container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function handleFileSelect(input, previewId, hiddenInputId) {
+  const file = input.files[0];
+  if (!file) return;
+  processFile(file, previewId, hiddenInputId);
+}
+
+function handleDropEvent(event, element) {
+  event.preventDefault();
+  element.style.borderColor = 'var(--border)';
+  element.style.background = '#FFF';
+
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+
+  const fileInput = element.querySelector('input[type="file"]');
+  const onchangeAttr = fileInput.getAttribute('onchange');
+  const matches = onchangeAttr.match(/'([^']+)'/g);
+  if (matches && matches.length >= 2) {
+    const previewId = matches[0].replace(/'/g, '');
+    const hiddenInputId = matches[1].replace(/'/g, '');
+    processFile(file, previewId, hiddenInputId);
+  }
+}
+
+function processFile(file, previewId, hiddenInputId) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    document.getElementById(hiddenInputId).value = dataUrl;
+
+    const previewContainer = document.getElementById(previewId);
+    if (!previewContainer) return;
+
+    if (file.type.startsWith('image/')) {
+      previewContainer.innerHTML = `
+        <img src="${dataUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />
+        <span style="font-size:0.8rem; color:var(--success); font-weight:600;">✓ Imagen cargada (${(file.size/1024).toFixed(1)} KB)</span>
+      `;
+    } else if (file.type === 'application/pdf') {
+      previewContainer.innerHTML = `
+        <span style="font-size:1.2rem;">📄</span>
+        <span style="font-size:0.8rem; color:var(--success); font-weight:600;">✓ PDF cargado (${(file.size/1024).toFixed(1)} KB)</span>
+      `;
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 function adminSaveEditProduct(event) {
@@ -2115,6 +2296,7 @@ function adminSaveEditProduct(event) {
   product.oldPrice = oldPriceVal ? parseInt(oldPriceVal, 10) : Math.round(product.price * 1.25);
   product.badge = document.getElementById('editProdBadge').value.trim();
   product.imgUrl = document.getElementById('editProdImgUrl').value.trim();
+  product.manualPdfUrl = document.getElementById('editProdPdfData').value.trim();
   product.desc = document.getElementById('editProdDesc').value.trim();
 
   saveProducts();
@@ -2131,6 +2313,8 @@ function adminCreateProduct(event) {
   const price = parseInt(document.getElementById('newProdPrice').value, 10);
   const badge = document.getElementById('newProdBadge').value || 'Nuevo';
   const desc = document.getElementById('newProdDesc').value;
+  const imgUrl = document.getElementById('newProdImgUrl').value.trim();
+  const manualPdfUrl = document.getElementById('newProdPdfData').value.trim();
 
   const categoryNames = {
     mascotas: 'Mascotas',
@@ -2152,6 +2336,8 @@ function adminCreateProduct(event) {
     reviews: 1,
     badge: badge,
     desc: desc,
+    imgUrl: imgUrl,
+    manualPdfUrl: manualPdfUrl,
     svgIcon: `<svg viewBox="0 0 200 200" width="120" height="120"><circle cx="100" cy="100" r="70" fill="#0D9488"/><circle cx="100" cy="100" r="30" fill="#F97316"/></svg>`
   };
 

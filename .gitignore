@@ -1,7 +1,22 @@
-node_modules/
-.gemini/
-.agent/
-.agents/
+﻿# OS
 .DS_Store
 Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Agent / Planning files (not needed in production)
+.agents/
+_bmad/
+_bmad-output/
+
+# Design artifacts (internal)
+design-artifacts/
+
+# Planning documents (internal)
+MATERIAL_PAGINA_WEB.txt
+MATERIAL_PLANEACION_PRODUCTOS.txt
+
+# Logs
 *.log

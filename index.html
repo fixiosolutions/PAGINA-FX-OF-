@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIXIO Solutions | Productos Prácticos Que Hacen Tu Vida Más Fácil</title>
+  <meta name="description" content="Descubre productos tecnológicos prácticos, útiles y fáciles de usar para el hogar, mascotas y oficina en Bogotá y Colombia. Soluciones que arreglan tu día.">
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- EMAILJS & WOMPI PAYMENT GATEWAY SDKs -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script type="text/javascript" src="https://checkout.wompi.co/widget.js"></script>
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="top-bar">
+    <span class="highlight">ENVÍOS GRATIS</span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      Envíos a todo Bogotá y Colombia | Garantía directa FIXIO SOLUTIONS S.A.S.
+    </span>
+  </div>
+
+  <!-- Main Header -->
+  <header class="main-header">
+    <div class="nav-container">
+      <a href="#" class="brand-logo" style="display:flex; align-items:center; gap:12px;">
+        <img src="MATERIAL/LOGO FIXIO.png" alt="FIXIO Solutions Logo" style="height:48px; max-width:220px; object-fit:contain;" />
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#inicio" class="active">Inicio</a></li>
+        <li><a href="#productos">Productos</a></li>
+        <li><a href="#blog">Blog & Consejos</a></li>
+        <li><a href="#faq">Ayuda & FAQ</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <div id="headerUserAuth" style="display:flex; align-items:center; gap:10px;">
+          <!-- Dynamically populated by renderHeaderAuth() in app.js -->
+        </div>
+        <button class="icon-btn" onclick="openCartDrawer()" title="Ver Carrito de Compras" id="cartBtn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+        <button class="btn btn-accent" onclick="document.getElementById('productos').scrollIntoView({behavior: 'smooth'})">
+          Comprar Ahora
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section" id="inicio">
+    <div class="hero-container">
+      <div class="hero-content">
+        <span class="hero-badge">Novedad de Temporada — Mascotas &amp; Hogar</span>
+        <h1 class="hero-title">PRODUCTOS PRÁCTICOS QUE HACEN TU <span>VIDA MÁS FÁCIL</span></h1>
+        <p class="hero-subtitle">Artículos útiles, simples y confiables, diseñados para mejorar tu día a día en el hogar y la oficina sin complicaciones tecnológicas ni manuales eternos.</p>
+        
+        <div class="hero-cta">
+          <button class="btn btn-primary" onclick="document.getElementById('productos').scrollIntoView({behavior: 'smooth'})">
+            Explorar Catálogo
+          </button>
+          <button class="btn btn-outline" onclick="openCheckoutModal()">
+            Pago Seguro PSE / Nequi
+          </button>
+        </div>
+
+        <!-- 4 Value Pillars -->
+        <div class="hero-pillars">
+          <div class="pillar-card">
+            <div class="icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <h4>Prácticos</h4>
+            <p>Para el día a día</p>
+          </div>
+          <div class="pillar-card">
+            <div class="icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h4>Útiles</h4>
+            <p>Realmente funcionan</p>
+          </div>
+          <div class="pillar-card">
+            <div class="icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <h4>Fáciles de Usar</h4>
+            <p>Sin manuales eternos</p>
+          </div>
+          <div class="pillar-card">
+            <div class="icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <h4>Mejoran Tu Vida</h4>
+            <p>Más tiempo para ti</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Featured Product Card -->
+      <div class="hero-visual">
+        <div class="featured-product-card">
+          <span class="featured-tag">🔥 PRODUCTO ESTRELLA</span>
+          <div class="product-img-wrapper">
+            <svg viewBox="0 0 200 200" width="180" height="180">
+              <rect x="50" y="30" width="100" height="140" rx="20" fill="#0D9488"/>
+              <rect x="60" y="45" width="80" height="65" rx="12" fill="#2DD4BF"/>
+              <circle cx="100" cy="145" r="18" fill="#FFF"/>
+              <circle cx="100" cy="145" r="10" fill="#0F172A"/>
+              <path d="M70 172 Q100 185 130 172" stroke="#F97316" stroke-width="6" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 style="font-size:1.2rem; font-weight:700;">Alimentador Inteligente IMIPAW 3L Wi-Fi</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:6px 0;">Control por App móvil, porciones programables, doble alimentación USB y baterías de respaldo.</p>
+          
+          <div class="price-tag">
+            <span class="price-current">$250.000 COP</span>
+            <span class="price-old">$320.000 COP</span>
+          </div>
+
+          <button class="btn btn-accent" onclick="addToCart('FX-001')" style="width:100%;">
+            🛒 Agregar al Carrito — $250.000
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products Storefront Section -->
+  <section class="section reveal-on-scroll" id="productos">
+    <div class="section-header">
+      <span class="section-tag">NUESTRO CATÁLOGO FIXIO</span>
+      <h2 class="section-title">Soluciones Listas Para Usar</h2>
+      <p class="section-desc">Selección rigurosa de tecnología práctica probada para garantizar máxima durabilidad y facilidad.</p>
+    </div>
+
+    <!-- Controls & Search -->
+    <div class="store-controls">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Buscar por producto, beneficio o categoría...">
+      </div>
+      
+      <div class="category-pills">
+        <button class="pill-btn active" data-category="all">Todas</button>
+        <button class="pill-btn" data-category="mascotas">Mascotas</button>
+        <button class="pill-btn" data-category="hogar">Hogar</button>
+        <button class="pill-btn" data-category="oficina">Oficina</button>
+        <button class="pill-btn" data-category="tecnologia">Tecnología</button>
+        <button class="pill-btn" data-category="auto">Auto</button>
+      </div>
+
+      <select id="sortSelect" class="sort-select">
+        <option value="default">Ordenar por...</option>
+        <option value="price-asc">Precio: Menor a Mayor</option>
+        <option value="price-desc">Precio: Mayor a Menor</option>
+        <option value="rating">★ Mejor Calificados</option>
+        <option value="reviews">Más Opiniones</option>
+      </select>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid" id="productsContainer">
+      <!-- Dynamic products inserted by app.js -->
+    </div>
+  </section>
+
+  <!-- Guarantee & Trust Banner -->
+  <section class="section" style="padding-top:0;">
+    <div class="trust-banner">
+      <div class="trust-grid">
+        <div class="trust-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <h3>Garantía Directa en Colombia</h3>
+          <p>Todos nuestros equipos son legalizados y cuentan con respaldo técnico directo de FIXIO SOLUTIONS S.A.S.</p>
+        </div>
+        <div class="trust-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          <h3>Pagos Seguros & Nequi</h3>
+          <p>Realiza tus compras tranquilamente vía Bancolombia, Nequi, PSE o tarjetas de crédito/débito.</p>
+        </div>
+        <div class="trust-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <h3>Envíos Rápidos en Bogotá</h3>
+          <p>Despachos diarios en caja protegida con guía de seguimiento a tu WhatsApp o correo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog & Useful Tips Section -->
+  <section class="section" id="blog" style="background:#FFFFFF;">
+    <div class="section-header">
+      <span class="section-tag">CONSEJOS ÚTILES & BLOG</span>
+      <h2 class="section-title">Ideas Para Simplificar Tu Rutina</h2>
+      <p class="section-desc">Guías cortas y consejos prácticos para optimizar el tiempo en tu hogar.</p>
+    </div>
+
+    <div class="products-grid" id="blogGridContainer" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+      <!-- Dynamic blog posts rendered by app.js -->
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="section" id="faq">
+    <div class="section-header">
+      <span class="section-tag">CENTRO DE AYUDA</span>
+      <h2 class="section-title">Preguntas Frecuentes</h2>
+      <p class="section-desc">Resolvemos tus dudas principales sobre nuestros productos y envíos.</p>
+    </div>
+
+    <div class="faq-container">
+
+      <!-- FAQ Search -->
+      <div class="faq-search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="faqSearchInput" placeholder="Buscar en preguntas frecuentes... (ej: garantía, envio, pago)">
+      </div>
+      <p id="faqNoResult" style="display:none; text-align:center; color:var(--text-muted); padding:20px 0;">No encontramos resultados. Prueba con otra palabra clave.</p>
+
+      <div class="faq-item active">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          ¿Cómo funciona la garantía de los productos FIXIO?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">
+          Todos los productos FIXIO cuentan con garantía directa contra defectos de fábrica. En caso de alguna eventualidad, nos escribes a <strong>fixiosolutions@gmail.com</strong> o a nuestro canal de WhatsApp y tramitamos la revisión o sustitución de inmediato.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          ¿El alimentador de mascotas funciona si se va la luz o el Wi-Fi?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">
+          ¡Sí! El alimentador IMIPAW incluye un sistema de doble energía: funciona conectado a USB y además permite colocar baterías de respaldo. Si la luz o el Wi-Fi fallan, las comisiones previamente programadas se dispensan automáticamente.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          ¿Cuáles son los métodos de pago aceptados?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">
+          Aceptamos transferencias Nequi, Bancolombia, pagos electrónicos por PSE y tarjetas de crédito o débito con total protección bancaria.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          ¿Cuánto tarda el envío en Bogotá?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">
+          Los pedidos en Bogotá llegan en 1 a 2 días hábiles. Para el resto de Colombia el tiempo estimado es de 3 a 5 días hábiles. Recibes un número de guía por WhatsApp cuando tu pedido sea despachado.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          ¿Puedo hacer una devolución si el producto no es lo que esperaba?
+          <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">
+          Sí. Tienes hasta 15 días calendario para solicitar devolución o cambio si el producto no cumple tus expectativas o presenta algún defecto. Escíbenos a fixiosolutions@gmail.com con tu número de pedido.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TESTIMONIALS SECTION
+  ═══════════════════════════════════════════════════════ -->
+  <section class="section testimonials-section reveal-on-scroll" id="testimonios">
+    <div class="section-header">
+      <span class="section-tag">★ TESTIMONIOS DE CLIENTES</span>
+      <h2 class="section-title">Lo Que Dicen Nuestros Clientes</h2>
+      <p class="section-desc">Más de <strong>1.200 hogares colombianos</strong> ya confian en FIXIO Solutions para su día a día.</p>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">“El alimentador IMIPAW fue un cambio total para mi gato Milo. Ahora come exactamente a las 7am y 7pm sin falta, y yo puedo viajar tranquila. La App es facilísima de usar.”</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">MR</div>
+          <div>
+            <div class="testimonial-name">Maritza Rodríguez</div>
+            <div class="testimonial-role">Dueña de mascota • Bogotá Norte</div>
+          </div>
+          <span class="testimonial-badge">Alimentador IMIPAW</span>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">“Me alivió el dolor de cuello que tenía en el teletrabajo. El soporte de aluminio es muy resistente y fácil de ajustar. Lo mejor del home office.”</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">CR</div>
+          <div>
+            <div class="testimonial-name">Camilo Restrepo</div>
+            <div class="testimonial-role">Desarrollador • Chapinero, Bogotá</div>
+          </div>
+          <span class="testimonial-badge">Soporte Ergonómico</span>
+        </div>
+      </div>
+      <div class="testimonial-card testimonial-card--featured">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">“Compré la lámpara LED para el clóset y la cocina. El sensor funciona perfecto, se enciende solo cuando entro en la noche. Ya la recomendé a toda mi familia.”</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">SP</div>
+          <div>
+            <div class="testimonial-name">Sonia Peña</div>
+            <div class="testimonial-role">Diseñadora • Suba, Bogotá</div>
+          </div>
+          <span class="testimonial-badge">Lámpara LED Sensor</span>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">“La aspiradora portátil tiene bastante fuerza de succión para limpiar las migas del carro. El filtro HEPA es fácil de lavar. Super recomendada.”</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">MK</div>
+          <div>
+            <div class="testimonial-name">Mateo Kondo</div>
+            <div class="testimonial-role">Conductor • Kennedy, Bogotá</div>
+          </div>
+          <span class="testimonial-badge">Aspiradora Portátil</span>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">“El dispensador de agua para mis dos gatos es silencioso y super limpio. Desde que lo tengo ellos toman mucha más agua, se nota en su pelaje.”</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">CM</div>
+          <div>
+            <div class="testimonial-name">Carolina Méndez</div>
+            <div class="testimonial-role">Veterinaria • Usaquén, Bogotá</div>
+          </div>
+          <span class="testimonial-badge">Dispensador de Agua</span>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">“El kit de limpieza 7-en-1 es muy completo para limpiar audífonos y AirPods. Práctico para cargar en la maleta. Me ha servido muchísimo en viajes.”</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">AV</div>
+          <div>
+            <div class="testimonial-name">Andrés Valencia</div>
+            <div class="testimonial-role">Fotografó • La Candelaria, Bogotá</div>
+          </div>
+          <span class="testimonial-badge">Kit Limpieza Tech</span>
+        </div>
+      </div>
+    </div>
+    <!-- Stats Bar -->
+    <div class="testimonials-stats">
+      <div class="stat-item">
+        <div class="stat-number">+1.200</div>
+        <div class="stat-label">Clientes felices</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">4.9 ★</div>
+        <div class="stat-label">Calificación promedio</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">+98%</div>
+        <div class="stat-label">Recomiendan FIXIO</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">1-3 días</div>
+        <div class="stat-label">Entrega en Bogotá</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       NEWSLETTER SECTION
+  ═══════════════════════════════════════════════════════ -->
+  <section class="newsletter-section reveal-on-scroll" id="newsletter">
+    <div class="newsletter-inner">
+      <div class="newsletter-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <div class="newsletter-text">
+        <h2>¿Quieres Consejos Prácticos y Ofertas Exclusivas?</h2>
+        <p>Únete a más de <strong>+1.200 hogares colombianos</strong> que reciben nuestro boletín quincenal con tips, tutoriales y descuentos especiales para suscriptores.</p>
+      </div>
+      <form class="newsletter-form" onsubmit="handleNewsletterSubscription(event)" id="newsletterForm">
+        <input type="email" id="newsletterEmail" placeholder="Tu correo electrónico aquí..." class="newsletter-input" required>
+        <button type="submit" class="btn btn-accent newsletter-btn">
+          Suscribirme Gratis
+        </button>
+      </form>
+      <div id="newsletterSuccess" class="newsletter-success" style="display:none;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6EE7B7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>¡Listo! Ya eres parte de la familia FIXIO. Revisa tu correo.</span>
+      </div>
+      <p class="newsletter-disclaimer">Sin spam. Puedes cancelar cuando quieras. Máximo 2 correos al mes.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONTACT SECTION
+  ═══════════════════════════════════════════════════════ -->
+  <section class="section contact-section reveal-on-scroll" id="contacto">
+    <div class="section-header">
+      <span class="section-badge">ATENCIÓN AL CLIENTE</span>
+      <h2 class="section-title">¿Necesitas Ayuda? <span class="gradient-text">Estamos Aquí</span></h2>
+      <p class="section-desc">Nuestro equipo en Bogotá está disponible para resolver tus dudas, asesorarte en tu compra y gestionar garantías.</p>
+    </div>
+
+    <div class="contact-grid">
+      <!-- Contact Info -->
+      <div class="contact-info-panel reveal-on-scroll">
+        <div class="contact-info-item">
+          <div class="contact-info-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div>
+            <div class="contact-info-label">Correo Electrónico</div>
+            <a href="mailto:fixiosolutions@gmail.com" class="contact-info-value">fixiosolutions@gmail.com</a>
+          </div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.47 2 2 0 0 1 3.59 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.77a16 16 0 0 0 6.29 6.29l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div>
+            <div class="contact-info-label">WhatsApp Directo / Teléfono</div>
+            <a href="https://wa.me/573116860336" target="_blank" class="contact-info-value">+57 311 6860336</a>
+          </div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <div class="contact-info-label">Dirección &amp; Oficina Principal</div>
+            <span class="contact-info-value">Cra 18 #78-74 Of 602, Bogotá D.C., Colombia</span>
+          </div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="contact-info-label">Horario de Atención</div>
+            <span class="contact-info-value">Lun–Vie 8am–6pm · Sáb 9am–2pm</span>
+          </div>
+        </div>
+        <!-- Map Embed -->
+        <div style="margin-top:20px; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border);">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d254508.39282989015!2d-74.24508502500003!3d4.648217000000016!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9bfd2da6cb29%3A0x239d635520a33914!2sBogot%C3%A1!5e0!3m2!1ses!2sco!4v1680000000000!5m2!1ses!2sco"
+            width="100%" height="180" style="border:0; display:block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="FIXIO Solutions – Bogotá, Colombia">
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="contact-form-panel reveal-on-scroll">
+        <h3 style="font-size:1.2rem; margin-bottom:18px; color:var(--dark);">Envíanos un Mensaje</h3>
+        <form onsubmit="handleContactForm(event)" id="contactForm">
+          <div class="form-group">
+            <label>Tu Nombre</label>
+            <input type="text" id="ctName" class="form-control" placeholder="Ej: Maritza Rodríguez" required>
+          </div>
+          <div class="form-group">
+            <label>Correo Electrónico</label>
+            <input type="email" id="ctEmail" class="form-control" placeholder="tu.correo@gmail.com" required>
+          </div>
+          <div class="form-group">
+            <label>Asunto</label>
+            <select id="ctSubject" class="form-control">
+              <option value="Consulta sobre producto">Consulta sobre producto</option>
+              <option value="Estado de mi pedido">Estado de mi pedido</option>
+              <option value="Garantía o devolución">Garantía o devolución</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tu Mensaje</label>
+            <textarea id="ctMessage" class="form-control" placeholder="Cuéntanos cómo podemos ayudarte..." rows="4" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Enviar Mensaje</button>
+        </form>
+        <div id="contactSuccess" style="display:none; background:var(--success-bg, #F0FDF4); border:1px solid #86EFAC; border-radius:var(--radius-md); padding:18px; margin-top:16px; text-align:center;">
+          <div style="margin-bottom:8px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <strong style="color:#15803D;">¡Mensaje Enviado Exitosamente!</strong>
+          <p style="font-size:0.87rem; color:#166534; margin-top:4px;">Te responderemos en menos de 24 horas hábiles.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PREMIUM FOOTER
+  ═══════════════════════════════════════════════════════ -->
+  <footer class="main-footer">
+    <div class="footer-container">
+
+      <!-- Brand Column -->
+      <div class="footer-brand">
+        <div class="brand-logo" style="display:flex; align-items:center; gap:12px; font-size:1.1rem;">
+          <img src="MATERIAL/LOGO FIXIO.png" alt="FIXIO Solutions Logo" style="height:44px; max-width:200px; object-fit:contain; background:#FFFFFF; padding:4px 8px; border-radius:8px;" />
+        </div>
+        <p style="font-size:0.87rem; color:rgba(255,255,255,0.65); line-height:1.6; margin:12px 0;">
+          Soluciones tecnológicas prácticas, útiles y fáciles de usar para mejorar la calidad de vida en los hogares colombianos.<br>
+          📍 <strong>Oficina:</strong> Cra 18 #78-74 Of 602, Bogotá D.C.<br>
+          📱 <strong>Contacto:</strong> +57 311 6860336
+        </p>
+        <!-- Social Links -->
+        <div class="social-links">
+          <a href="#" class="social-btn" title="Instagram FIXIO" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+          <a href="#" class="social-btn" title="Facebook FIXIO" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="#" class="social-btn" title="TikTok FIXIO" aria-label="TikTok">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+          </a>
+          <a href="https://wa.me/573116860336" target="_blank" class="social-btn social-btn--wa" title="WhatsApp FIXIO" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Links Column: Categories -->
+      <div class="footer-col">
+        <h4>Categorías</h4>
+        <ul>
+          <li><a href="#productos" onclick="filterCategory('mascotas')">Mascotas</a></li>
+          <li><a href="#productos" onclick="filterCategory('hogar')">Hogar</a></li>
+          <li><a href="#productos" onclick="filterCategory('oficina')">Oficina</a></li>
+          <li><a href="#productos" onclick="filterCategory('tecnologia')">Tecnología</a></li>
+          <li><a href="#productos" onclick="filterCategory('auto')">Auto</a></li>
+        </ul>
+      </div>
+
+      <!-- Links Column: Company -->
+      <div class="footer-col">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="#inicio">Nosotros</a></li>
+          <li><a href="#blog">Blog & Consejos</a></li>
+          <li><a href="#faq">Preguntas Frecuentes</a></li>
+          <li><a href="#contacto">Garantías & Devoluciones</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+        </ul>
+      </div>
+
+      <!-- Trust Badges Column -->
+      <div class="footer-col">
+        <h4>Compra Segura</h4>
+        <div class="trust-badges">
+          <div class="trust-badge">
+            <span class="trust-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <div>
+              <div class="trust-badge-title">Pago Seguro SSL</div>
+              <div class="trust-badge-desc">Datos protegidos 256-bit</div>
+            </div>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.89"/></svg>
+            </span>
+            <div>
+              <div class="trust-badge-title">Devolución Fácil</div>
+              <div class="trust-badge-desc">15 días sin preguntas</div>
+            </div>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            <div>
+              <div class="trust-badge-title">Garantía FIXIO</div>
+              <div class="trust-badge-desc">Todos los productos</div>
+            </div>
+          </div>
+          <div class="trust-badge">
+            <span class="trust-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </span>
+            <div>
+              <div class="trust-badge-title">Empresa Colombiana</div>
+              <div class="trust-badge-desc">Cám. Comercio Bogotá</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom Bar -->
+    <div class="footer-bottom">
+      <div class="footer-bottom-left">
+        <p>© 2026 <strong>FIXIO SOLUTIONS S.A.S.</strong> — NIT: 901.234.567-8 — Todos los derechos reservados.</p>
+        <p style="font-size:0.75rem; color:rgba(255,255,255,0.45); margin-top:4px;">Cámara de Comercio de Bogotá · Superintendencia de Industria y Comercio</p>
+      </div>
+      <div class="footer-bottom-links">
+        <a href="#">Términos y Condiciones</a>
+        <a href="#">Política de Privacidad</a>
+        <a href="#">Política de Envíos</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CART DRAWER MODAL -->
+  <div class="modal-overlay" id="cartOverlay" onclick="closeCartDrawer()"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3 style="font-size:1.2rem;">🛒 Tu Carrito de Compras</h3>
+      <button onclick="closeCartDrawer()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+    </div>
+    <div class="cart-items-list" id="cartItemsList">
+      <!-- Cart items rendered by app.js -->
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal">
+        <span>Subtotal:</span>
+        <span id="cartSubtotal">$0 COP</span>
+      </div>
+      <button class="btn btn-accent" style="width:100%;" onclick="openCheckoutModal()">
+        Proceder al Pago 🔒
+      </button>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="modal-overlay" id="checkoutOverlay" onclick="closeCheckoutModal()"></div>
+  <div class="modal-dialog" id="checkoutModal">
+    <h2 style="font-size:1.5rem; margin-bottom:10px;">🔒 Finalizar Compra Segura</h2>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">Ingresa tus datos para la entrega y selecciona tu medio de pago.</p>
+    
+    <form onsubmit="processCheckout(event)">
+      <div class="form-group">
+        <label>Nombre Completo</label>
+        <input type="text" id="custName" class="form-control" placeholder="Ej: Maritza Rodríguez" required>
+      </div>
+      <div class="form-group">
+        <label>Correo Electrónico <span style="font-size:0.78rem; color:var(--primary-dark); font-weight:600;">(para recibir tu comprobante de compra)</span></label>
+        <input type="email" id="custEmail" class="form-control" placeholder="ejemplo@correo.com" required>
+      </div>
+      <div class="form-group">
+        <label>Dirección de Entrega (Bogotá / Ciudad)</label>
+        <input type="text" id="custAddress" class="form-control" placeholder="Ej: Calle 127 # 45 - 20, Apto 302" required>
+      </div>
+      <div class="form-group">
+        <label>Zona de Envío</label>
+        <select id="shippingZoneSelect" class="form-control" onchange="updateCheckoutTotals()" required>
+          <option value="8000">Bogotá Norte / Chapinero / Usaquén ($8.000 COP)</option>
+          <option value="8000">Bogotá Centro / Teusaquillo / Salitre ($8.000 COP)</option>
+          <option value="10000">Bogotá Sur / Occidente ($10.000 COP)</option>
+          <option value="14000">Resto de Colombia / Envío Nacional ($14.000 COP)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Teléfono de Contacto / WhatsApp</label>
+        <input type="tel" id="custPhone" class="form-control" placeholder="Ej: 310 123 4567" required>
+      </div>
+
+      <div class="form-group">
+        <label>Método de Pago</label>
+        <select id="paymentMethod" class="form-control" onchange="toggleWompiNotice(this.value)" required style="font-weight:700;">
+          <option value="Pago Contra Entrega (Bogotá)">💵 Pago Contra Entrega — Efectivo / Nequi al recibir (Sin cobro extra)</option>
+          <option value="Nequi Directo">📱 Nequi — Transferencia directa al número del mensajero</option>
+          <option value="PSE / Transferencia Bancaria">🏦 PSE / Transferencia Bancaria (Bancolombia, Davivienda...)</option>
+          <option value="Tarjeta de Crédito / Débito">💳 Tarjeta de Crédito / Débito (Visa, Mastercard, Amex)</option>
+          <option value="Wompi (PSE, Nequi, Tarjetas)">⚡ Wompi — Pasarela en línea (Requiere producción)</option>
+        </select>
+        <!-- Wompi notice for local/dev mode -->
+        <div id="wompiDevNotice" style="display:none; margin-top:8px; background:#FEF3C7; border:1px solid #F59E0B; border-radius:6px; padding:10px 12px; font-size:0.8rem; color:#92400E;">
+          ⚠️ <strong>Nota:</strong> Wompi funciona en producción (con llave <code>pub_prod_...</code>). Para probar el flujo completo localmente, selecciona otro método de pago.
+        </div>
+      </div>
+
+      <div style="background:var(--light-bg); padding:14px; border-radius:var(--radius-sm); margin:16px 0; display:flex; justify-content:space-between; font-weight:700;">
+        <span>Total a pagar:</span>
+        <span id="checkoutTotal">$0 COP</span>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:20px;">
+        <button type="button" class="btn btn-outline" onclick="closeCheckoutModal()" style="flex:1;">Cancelar</button>
+        <button type="submit" class="btn btn-accent" style="flex:2;">Confirmar Pedido ✅</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- SUCCESS CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="successOverlay" onclick="closeSuccessModal()"></div>
+  <div class="modal-dialog" id="successModal" style="max-width:520px; max-height:88vh; overflow-y:auto; position:relative; z-index:1001;">
+    <!-- Sticky Close Button -->
+    <button onclick="closeSuccessModal()" title="Cerrar ventana" style="position:sticky; top:8px; float:right; z-index:100; background:var(--surface); border:1.5px solid var(--border); border-radius:50%; width:36px; height:36px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--dark); box-shadow:var(--shadow-md);">✕</button>
+
+    <!-- Confetti Layer -->
+    <div id="confettiContainer" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; z-index:0;"></div>
+
+    <div style="position:relative; z-index:1; text-align:center; margin-bottom:24px;">
+      <div id="successCheckmark" style="width:80px; height:80px; background:linear-gradient(135deg, #0D9488, #2DD4BF); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; box-shadow:0 8px 30px rgba(13,148,136,0.35); animation:successPop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;">
+        <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2 style="font-size:1.6rem; color:var(--primary-dark); margin-bottom:6px;">¡Pedido Confirmado!</h2>
+      <p style="font-size:0.95rem; color:var(--text-muted);">Tu orden en <strong>FIXIO SOLUTIONS S.A.S.</strong> está registrada y en proceso.</p>
+    </div>
+
+    <div id="orderSummaryDetails" style="position:relative; z-index:1;">
+      <!-- Order details dynamically rendered by processCheckout() -->
+    </div>
+
+    <!-- Estimated Delivery Banner -->
+    <div style="position:relative; z-index:1; background:linear-gradient(135deg, #F0FDF4, #DCFCE7); border:1px solid #86EFAC; border-radius:var(--radius-md); padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px;">
+      <span style="font-size:2rem;">🚚</span>
+      <div>
+        <div style="font-weight:700; color:#15803D; font-size:0.95rem;">Entrega Estimada: 1 a 3 días hábiles</div>
+        <div style="font-size:0.82rem; color:#166534;">Te notificaremos por WhatsApp cuando tu pedido sea despachado.</div>
+      </div>
+    </div>
+
+    <div style="position:relative; z-index:1; display:flex; gap:10px; flex-direction:column;">
+      <a id="waTrackingBtn" href="#" target="_blank" class="btn btn-accent" style="display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
+        <svg viewBox="0 0 24 24" width="20" height="20" style="fill:#fff; flex-shrink:0;"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        Seguir mi Pedido por WhatsApp
+      </a>
+      <button class="btn btn-outline" onclick="closeSuccessModal()" style="width:100%;">
+        Seguir Comprando en FIXIO
+      </button>
+    </div>
+  </div>
+
+  <!-- PRODUCT DETAIL MODAL -->
+  <div class="modal-overlay" id="productDetailOverlay" onclick="closeProductDetail()"></div>
+  <div class="modal-dialog product-detail-dialog" id="productDetailModal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+      <h3 style="font-size:1.1rem; color:var(--text-muted);">Ficha Técnica & Detalle de Producto</h3>
+      <button onclick="closeProductDetail()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+    </div>
+    <div id="productDetailContent">
+      <!-- Rendered by app.js -->
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD MODAL -->
+  <div class="modal-overlay" id="adminOverlay" onclick="closeAdminModal()"></div>
+  <div class="modal-dialog admin-dialog" id="adminModal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div>
+        <h2 style="font-size:1.4rem; font-weight:800;">⚙️ Panel de Administración FIXIO</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted);">Gestión de catálogo, seguimiento de pedidos y clientes</p>
+      </div>
+      <button onclick="closeAdminModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" data-tab="products" onclick="switchAdminTab('products')">📦 Productos</button>
+      <button class="admin-tab-btn" data-tab="orders" onclick="switchAdminTab('orders')">🚚 Pedidos</button>
+      <button class="admin-tab-btn" data-tab="customers" onclick="switchAdminTab('customers')">👥 Clientes & Suscriptores</button>
+      <button class="admin-tab-btn" data-tab="blog" onclick="switchAdminTab('blog')">📝 Blog & Consejos</button>
+    </div>
+
+    <div id="adminTabContent">
+      <!-- Rendered dynamically by app.js -->
+    </div>
+  </div>
+
+  <!-- AUTHENTICATION MODAL (LOGIN / REGISTRO) -->
+  <div class="modal-overlay" id="authOverlay" onclick="closeAuthModal()"></div>
+  <div class="modal-dialog" id="authModal" style="max-width: 460px; padding: 32px;">
+
+    <!-- Header -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
+      <div>
+        <h3 style="font-size:1.4rem; font-weight:800; color:var(--dark); margin:0 0 4px;" id="authModalTitle">Bienvenido a FIXIO</h3>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin:0;" id="authModalSubtitle">Inicia sesión para gestionar tus pedidos</p>
+      </div>
+      <button onclick="closeAuthModal()" style="background:none; border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-muted); flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Auth Notice (for checkout gate) -->
+    <div id="authModalNotice"></div>
+
+    <!-- Social Login Buttons -->
+    <div class="social-auth-buttons">
+      <button class="social-auth-btn social-auth-google" onclick="handleSocialLogin('google')" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continuar con Google
+      </button>
+
+      <button class="social-auth-btn social-auth-microsoft" onclick="handleSocialLogin('microsoft')" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+          <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+          <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+          <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+        </svg>
+        Continuar con Microsoft
+      </button>
+
+      <button class="social-auth-btn social-auth-facebook" onclick="handleSocialLogin('facebook')" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+        Continuar con Facebook
+      </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="auth-divider">
+      <span>o continúa con tu correo</span>
+    </div>
+
+    <!-- Auth Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" data-tab="login" onclick="switchAuthTab('login')">Iniciar Sesión</button>
+      <button class="auth-tab-btn" data-tab="register" onclick="switchAuthTab('register')">Crear Cuenta</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+      <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input type="email" id="loginEmail" class="form-control" placeholder="tu@correo.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label style="display:flex; justify-content:space-between;">
+          Contraseña
+          <span style="font-size:0.78rem; color:var(--primary); cursor:pointer; font-weight:500;">¿Olvidaste tu contraseña?</span>
+        </label>
+        <div style="position:relative;">
+          <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="padding-right:44px;">
+          <button type="button" onclick="togglePasswordVisibility('loginPass', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); display:flex; align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:16px; background:var(--surface-alt); padding:10px 12px; border-radius:var(--radius-sm); border-left:3px solid var(--primary);">
+        <strong>Demo Admin:</strong> <code>admin@fixio.com</code> / <code>admin123</code>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; padding:14px; font-size:1rem;">
+        Ingresar
+      </button>
+      <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); margin-top:16px;">
+        ¿No tienes cuenta? <span style="color:var(--primary); cursor:pointer; font-weight:600;" onclick="switchAuthTab('register')">Regístrate gratis</span>
+      </p>
+    </form>
+
+    <!-- Register Form -->
+    <form id="registerForm" onsubmit="handleRegisterSubmit(event)" style="display:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group" style="margin:0;">
+          <label>Nombre</label>
+          <input type="text" id="regName" class="form-control" placeholder="Tu nombre" required>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Teléfono</label>
+          <input type="tel" id="regPhone" class="form-control" placeholder="300 000 0000" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Correo Electrónico</label>
+        <input type="email" id="regEmail" class="form-control" placeholder="tu@correo.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <div style="position:relative;">
+          <input type="password" id="regPass" class="form-control" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" style="padding-right:44px;">
+          <button type="button" onclick="togglePasswordVisibility('regPass', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--text-muted); display:flex; align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dirección de Entrega (Bogotá)</label>
+        <input type="text" id="regAddress" class="form-control" placeholder="Calle / Carrera # Apto" required>
+      </div>
+      <button type="submit" class="btn btn-accent" style="width:100%; padding:14px; font-size:1rem;">
+        Crear Mi Cuenta FIXIO
+      </button>
+      <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); margin-top:16px;">
+        ¿Ya tienes cuenta? <span style="color:var(--primary); cursor:pointer; font-weight:600;" onclick="switchAuthTab('login')">Inicia sesión</span>
+      </p>
+    </form>
+  </div>
+
+  <!-- WHATSAPP FLOATING BUTTON -->
+  <a href="https://wa.me/573116860336?text=Hola%20FIXIO%20Solutions,%20tengo%20una%20consulta%20sobre%20un%20producto..." target="_blank" class="whatsapp-float" title="Atención directa por WhatsApp">
+    <svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+  </a>
+
+  <!-- BLOG POST DETAIL MODAL -->
+  <div class="modal-overlay blog-post-overlay" id="blogPostOverlay" onclick="closeBlogPost()"></div>
+  <div class="modal-dialog blog-post-dialog" id="blogPostModal">
+    <button onclick="closeBlogPost()" class="blog-post-close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="blogPostContent">
+      <!-- Rendered by openBlogPost() in app.js -->
+    </div>
+  </div>
+
+  <!-- MY ORDERS MODAL -->
+  <div class="modal-overlay" id="myOrdersOverlay" onclick="closeMyOrdersModal()"></div>
+  <div class="modal-dialog" id="myOrdersModal" style="max-width:780px; max-height:88vh; overflow-y:auto; border-radius:var(--radius-lg); padding:0;">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%); padding:24px 28px; border-radius:var(--radius-lg) var(--radius-lg) 0 0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:2;">
+      <div>
+        <h3 style="margin:0; color:#FFF; font-size:1.3rem; font-family:var(--font-heading);">📦 Mis Pedidos</h3>
+        <p style="margin:4px 0 0; color:rgba(255,255,255,0.75); font-size:0.85rem;">Historial y seguimiento de tus compras en FIXIO</p>
+      </div>
+      <button onclick="closeMyOrdersModal()" style="background:rgba(255,255,255,0.15); border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#FFF; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- Body -->
+    <div id="myOrdersContent" style="padding:24px 28px;">
+      <!-- Rendered by renderMyOrders() in app.js -->
+    </div>
+  </div>
+
+
+  <script src="js/app_v3.js"></script>
+</body>
+</html>

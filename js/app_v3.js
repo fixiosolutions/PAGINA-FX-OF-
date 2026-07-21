@@ -150,17 +150,28 @@ let orders = JSON.parse(localStorage.getItem('fixio_orders') || '[]');
 let subscribers = JSON.parse(localStorage.getItem('fixio_subscribers') || '[]');
 let currentUser = JSON.parse(localStorage.getItem('fixio_user') || 'null');
 
+// ─── CONFIGURACIÓN DE LA CUENTA ADMINISTRADOR ────────────────────────────
+// Para modificar las credenciales del Administrador, edita los valores aquí:
+const ADMIN_CONFIG = {
+  name: 'Administrador FIXIO',
+  email: 'admin@fixio.com', // 👈 Modifica aquí el correo de administración
+  pass: 'admin123',        // 👈 Modifica aquí la contraseña de administración
+  role: 'admin',
+  address: 'Cra 18 #78-74 Of 602, Bogotá',
+  phone: '+57 311 6860336'
+};
+
 // Registered Users — with admin pre-seeded
 let registeredUsers = JSON.parse(localStorage.getItem('fixio_users') || '[]');
-if (!registeredUsers.find(u => u.email === 'admin@fixio.com')) {
-  registeredUsers.unshift({
-    name: 'Administrador FIXIO',
-    email: 'admin@fixio.com',
-    pass: 'admin123',
-    role: 'admin',
-    address: 'Cra 18 #78-74 Of 602, Bogotá',
-    phone: '+57 311 6860336'
-  });
+const existingAdminIdx = registeredUsers.findIndex(u => u.role === 'admin' || u.email === ADMIN_CONFIG.email);
+if (existingAdminIdx === -1) {
+  registeredUsers.unshift({ ...ADMIN_CONFIG });
+  localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
+} else {
+  // Always update admin credentials to match ADMIN_CONFIG
+  registeredUsers[existingAdminIdx].email = ADMIN_CONFIG.email;
+  registeredUsers[existingAdminIdx].pass = ADMIN_CONFIG.pass;
+  registeredUsers[existingAdminIdx].name = ADMIN_CONFIG.name;
   localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
 }
 
@@ -2218,7 +2229,7 @@ function openAuthModal(intent = 'login') {
     if (noticeElem) noticeElem.innerHTML = `
       <div style="background:#FEE2E2; color:#991B1B; padding:10px 14px; border-radius:var(--radius-sm); font-size:0.85rem; margin-bottom:14px; border:1px solid #FCA5A5; display:flex; align-items:flex-start; gap:8px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span><strong>Acceso Admin:</strong> Usa <code>admin@fixio.com</code> / <code>admin123</code></span>
+        <span><strong>Acceso Reservado:</strong> Ingresa con tu cuenta de Administrador de FIXIO.</span>
       </div>
     `;
     switchAuthTab('login');

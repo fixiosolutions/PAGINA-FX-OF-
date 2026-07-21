@@ -2049,7 +2049,6 @@ button, input, select, textarea {
   overflow-y: auto;
   padding: 0;
   border-radius: var(--radius-lg);
-  position: relative;
 }
 .blog-post-close {
   position: sticky;

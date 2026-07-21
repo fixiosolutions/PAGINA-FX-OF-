@@ -147,6 +147,8 @@ function saveProducts() {
 // Cart & Orders & Auth State Management
 let cart = JSON.parse(localStorage.getItem('fixio_cart') || '[]');
 let orders = JSON.parse(localStorage.getItem('fixio_orders') || '[]');
+let subscribers = JSON.parse(localStorage.getItem('fixio_subscribers') || '[]');
+let currentUser = JSON.parse(localStorage.getItem('fixio_user') || 'null');
 // ─── CONFIGURACIÓN DE PROVEEDORES OAUTH 2.0 ─────────────────────────────
 // Reemplaza estos valores con tus Client IDs oficiales cuando registres tus aplicaciones:
 const OAUTH_CONFIG = {

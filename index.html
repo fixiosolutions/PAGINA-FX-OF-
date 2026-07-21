@@ -673,17 +673,10 @@
 
       <div class="form-group">
         <label>Método de Pago</label>
-        <select id="paymentMethod" class="form-control" onchange="toggleWompiNotice(this.value)" required style="font-weight:700;">
-          <option value="Pago Contra Entrega (Bogotá)">💵 Pago Contra Entrega — Efectivo / Nequi al recibir (Sin cobro extra)</option>
-          <option value="Nequi Directo">📱 Nequi — Transferencia directa al número del mensajero</option>
-          <option value="PSE / Transferencia Bancaria">🏦 PSE / Transferencia Bancaria (Bancolombia, Davivienda...)</option>
-          <option value="Tarjeta de Crédito / Débito">💳 Tarjeta de Crédito / Débito (Visa, Mastercard, Amex)</option>
-          <option value="Wompi (PSE, Nequi, Tarjetas)">⚡ Wompi — Pasarela en línea (Requiere producción)</option>
+        <select id="paymentMethod" class="form-control" required style="font-weight:700;">
+          <option value="Wompi (PSE, Nequi, Tarjetas, Bancolombia)">⚡ Wompi — Pasarela en Línea (PSE, Nequi, Tarjetas, Bancolombia)</option>
+          <option value="Pago Contra Entrega (Bogotá)">💵 Pago Contra Entrega — Efectivo / Nequi al recibir en Bogotá</option>
         </select>
-        <!-- Wompi notice for local/dev mode -->
-        <div id="wompiDevNotice" style="display:none; margin-top:8px; background:#FEF3C7; border:1px solid #F59E0B; border-radius:6px; padding:10px 12px; font-size:0.8rem; color:#92400E;">
-          ⚠️ <strong>Nota:</strong> Wompi funciona en producción (con llave <code>pub_prod_...</code>). Para probar el flujo completo localmente, selecciona otro método de pago.
-        </div>
       </div>
 
       <div style="background:var(--light-bg); padding:14px; border-radius:var(--radius-sm); margin:16px 0; display:flex; justify-content:space-between; font-weight:700;">

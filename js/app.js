@@ -152,7 +152,7 @@ let currentUser = JSON.parse(localStorage.getItem('fixio_user') || 'null');
 // ─── CONFIGURACIÓN DE PROVEEDORES OAUTH 2.0 ─────────────────────────────
 // Reemplaza estos valores con tus Client IDs oficiales cuando registres tus aplicaciones:
 const OAUTH_CONFIG = {
-  googleClientId: '1088491829471-demo.apps.googleusercontent.com', // Google Cloud Console
+  googleClientId: '1068413284905-mkk9iqhutkfnbmsposmpqunh80fkumj4.apps.googleusercontent.com', // Google Cloud Console
   microsoftClientId: 'demo-microsoft-client-id',                   // Azure Portal
   facebookAppId: 'demo-facebook-app-id'                            // Meta for Developers
 };

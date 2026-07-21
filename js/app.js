@@ -154,8 +154,8 @@ let currentUser = JSON.parse(localStorage.getItem('fixio_user') || 'null');
 // Para modificar las credenciales del Administrador, edita los valores aquí:
 const ADMIN_CONFIG = {
   name: 'Administrador FIXIO',
-  email: 'admin@fixio.com', // 👈 Modifica aquí el correo de administración
-  pass: 'admin123',        // 👈 Modifica aquí la contraseña de administración
+  email: 'FIXIOSOLUTIONS@GMAIL.COM', // 👈 Modifica aquí el correo de administración
+  pass: 'ZAQ!2wsx:)',        // 👈 Modifica aquí la contraseña de administración
   role: 'admin',
   address: 'Cra 18 #78-74 Of 602, Bogotá',
   phone: '+57 311 6860336'
@@ -735,7 +735,7 @@ function closeCheckoutModal() {
 
 // CONFIGURACIÓN DE NOTIFICACIONES Y PASARELA WOMPI
 const WOMPI_CONFIG = {
-  publicKey: 'pub_test_Q5y152W2BdAFRtxBEO3d80w1u26LqA8a', // Reemplazar con la llave pública de Wompi producción (pub_prod_...)
+  publicKey: 'pub_test_puPeVVVUUoZIbBem4sEwWsZ2mVo1O0f6', // Reemplazar con la llave pública de Wompi producción (pub_prod_...)
   currency: 'COP'
 };
 

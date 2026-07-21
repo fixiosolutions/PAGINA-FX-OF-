@@ -147,8 +147,13 @@ function saveProducts() {
 // Cart & Orders & Auth State Management
 let cart = JSON.parse(localStorage.getItem('fixio_cart') || '[]');
 let orders = JSON.parse(localStorage.getItem('fixio_orders') || '[]');
-let subscribers = JSON.parse(localStorage.getItem('fixio_subscribers') || '[]');
-let currentUser = JSON.parse(localStorage.getItem('fixio_user') || 'null');
+// ─── CONFIGURACIÓN DE PROVEEDORES OAUTH 2.0 ─────────────────────────────
+// Reemplaza estos valores con tus Client IDs oficiales cuando registres tus aplicaciones:
+const OAUTH_CONFIG = {
+  googleClientId: '1088491829471-demo.apps.googleusercontent.com', // Google Cloud Console
+  microsoftClientId: 'demo-microsoft-client-id',                   // Azure Portal
+  facebookAppId: 'demo-facebook-app-id'                            // Meta for Developers
+};
 
 // ─── CONFIGURACIÓN DE LA CUENTA ADMINISTRADOR ────────────────────────────
 // Para modificar las credenciales del Administrador, edita los valores aquí:
@@ -2334,23 +2339,74 @@ function logoutUser() {
   showToast('Sesión cerrada correctamente. ¡Hasta pronto!');
 }
 
-// ─── Social Login Handler (1-Click Instant Fast Access) ─────────────────────
+// ─── Social Login Handler (OAuth 2.0 & Instant Integration) ─────────────────
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 function handleSocialLogin(provider) {
-  const providers = {
-    google: { name: 'Google', domain: 'gmail.com', defaultName: 'Cliente Google' },
-    microsoft: { name: 'Microsoft / Outlook', domain: 'outlook.com', defaultName: 'Cliente Outlook' },
-    facebook: { name: 'Facebook', domain: 'facebook.com', defaultName: 'Cliente Facebook' }
+  const providerNames = {
+    google: 'Google',
+    microsoft: 'Microsoft / Outlook',
+    facebook: 'Facebook'
   };
 
-  const p = providers[provider] || { name: provider, domain: 'correo.com', defaultName: 'Usuario Social' };
+  const providerName = providerNames[provider] || provider;
 
-  // Check if existing social user or create new seamless account
-  const email = `cliente.${provider}@${p.domain}`;
+  // 1. Google Identity Services Native SDK integration
+  if (provider === 'google' && typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    try {
+      google.accounts.id.initialize({
+        client_id: OAUTH_CONFIG.googleClientId,
+        callback: (response) => {
+          const payload = parseJwt(response.credential);
+          if (payload && payload.email) {
+            completeSocialAuth(payload.name || 'Usuario Google', payload.email, 'google');
+          }
+        }
+      });
+      google.accounts.id.prompt();
+    } catch(err) {
+      console.warn('Google SDK init notice:', err);
+    }
+  }
+
+  // 2. Interactive Email Prompt (allows entering real personal email instantly)
+  const userEmail = prompt(
+    `🌐 Iniciar sesión con ${providerName}:\n\nIngresa tu correo electrónico para vincular tu cuenta de ${providerName}:`,
+    currentUser ? currentUser.email : `usuario@${provider === 'microsoft' ? 'outlook' : provider}.com`
+  );
+
+  if (!userEmail) return; // User cancelled
+
+  const userName = prompt(
+    `Ingresa tu nombre para mostrar en tu cuenta FIXIO:`,
+    currentUser ? currentUser.name : `Cliente ${providerName}`
+  ) || `Cliente ${providerName}`;
+
+  completeSocialAuth(userName, userEmail.trim().toLowerCase(), provider);
+}
+
+function completeSocialAuth(name, email, provider) {
+  const providerNames = {
+    google: 'Google',
+    microsoft: 'Microsoft / Outlook',
+    facebook: 'Facebook'
+  };
+  const providerName = providerNames[provider] || provider;
+
   let user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
 
   if (!user) {
     user = {
-      name: p.defaultName,
+      name: name,
       email: email,
       pass: null,
       role: 'customer',
@@ -2367,9 +2423,8 @@ function handleSocialLogin(provider) {
 
   renderHeaderAuth();
   closeAuthModal();
-  showToast(`🎉 ¡Sesión iniciada con ${p.name}! Bienvenido, ${currentUser.name}.`);
+  showToast(`🎉 ¡Sesión iniciada con ${providerName}! Bienvenido, ${currentUser.name}.`);
 
-  // If user was attempting checkout, proceed directly to Checkout Modal
   if (authIntent === 'checkout_required') {
     openCheckoutModal();
   }

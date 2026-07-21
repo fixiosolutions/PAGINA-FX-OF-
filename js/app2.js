@@ -1690,39 +1690,71 @@ function switchAdminTab(tabName) {
               <input type="text" id="editProdBadge" class="form-control" placeholder="ej: Más Vendido, Popular">
             </div>
             <div style="grid-column:1/-1;">
-              <label style="font-size:0.8rem; font-weight:600;">Ruta / URL de la Imagen (Manual o Externa)</label>
-              <input type="text" id="editProdImgUrl" class="form-control" placeholder="MATERIAL/img-fx001.png">
+              <label style="font-size:0.8rem; font-weight:600;">Rutas / URLs Manuales de las 3 Imágenes (Opcional)</label>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                <input type="text" id="editProdImgUrl" class="form-control" placeholder="1. Principal (Frontal)">
+                <input type="text" id="editProdImg2Url" class="form-control" placeholder="2. Secundaria (Uso)">
+                <input type="text" id="editProdImg3Url" class="form-control" placeholder="3. Terciaria (Detalle)">
+              </div>
             </div>
 
-            <!-- Drag and Drop Image & PDF Uploader -->
-            <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+            <!-- Drag and Drop 3 Images & PDF Uploader -->
+            <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
               <div>
-                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Subir Imagen (Arrastrar o Buscar)</label>
+                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">1. Principal (Frontal)</label>
                 <div class="upload-dropzone" id="editProdImgDropzone" onclick="document.getElementById('editProdImgFile').click()" 
                      ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
                      ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
                      ondrop="handleDropEvent(event, this)"
-                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
-                  <span style="font-size: 1.5rem;">🖼️</span>
-                  <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir imagen</p>
+                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                  <span style="font-size: 1.2rem;">🖼️</span>
+                  <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
                   <input type="file" id="editProdImgFile" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'editProdImgPreview', 'editProdImgUrl')">
                 </div>
-                <div id="editProdImgPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+                <div id="editProdImgPreview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
               </div>
 
               <div>
-                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Ficha Técnica / Manual (PDF)</label>
+                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">2. Secundaria (Uso)</label>
+                <div class="upload-dropzone" id="editProdImg2Dropzone" onclick="document.getElementById('editProdImg2File').click()" 
+                     ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                     ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                     ondrop="handleDropEvent(event, this)"
+                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                  <span style="font-size: 1.2rem;">🖼️</span>
+                  <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
+                  <input type="file" id="editProdImg2File" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'editProdImg2Preview', 'editProdImg2Url')">
+                </div>
+                <div id="editProdImg2Preview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
+              </div>
+
+              <div>
+                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">3. Terciaria (Detalle)</label>
+                <div class="upload-dropzone" id="editProdImg3Dropzone" onclick="document.getElementById('editProdImg3File').click()" 
+                     ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                     ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                     ondrop="handleDropEvent(event, this)"
+                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                  <span style="font-size: 1.2rem;">🖼️</span>
+                  <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
+                  <input type="file" id="editProdImg3File" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'editProdImg3Preview', 'editProdImg3Url')">
+                </div>
+                <div id="editProdImg3Preview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
+              </div>
+
+              <div>
+                <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">Manual / Ficha (PDF)</label>
                 <div class="upload-dropzone" id="editProdPdfDropzone" onclick="document.getElementById('editProdPdfFile').click()" 
                      ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
                      ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
                      ondrop="handleDropEvent(event, this)"
-                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
-                  <span style="font-size: 1.5rem;">📄</span>
-                  <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir PDF</p>
+                     style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                  <span style="font-size: 1.2rem;">📄</span>
+                  <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
                   <input type="file" id="editProdPdfFile" accept="application/pdf" style="display:none;" onchange="handleFileSelect(this, 'editProdPdfPreview', 'editProdPdfData')">
                 </div>
                 <input type="hidden" id="editProdPdfData">
-                <div id="editProdPdfPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+                <div id="editProdPdfPreview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
               </div>
             </div>
           </div>
@@ -1753,38 +1785,73 @@ function switchAdminTab(tabName) {
             <input type="number" id="newProdStock" placeholder="Stock Inicial (ej. 15)" class="form-control" min="0" value="15" required>
             <input type="number" id="newProdPrice" placeholder="Precio ($ COP)" class="form-control" required>
             <input type="text" id="newProdBadge" placeholder="Etiqueta (ej: Nuevo, Novedad)" class="form-control">
-            <input type="text" id="newProdImgUrl" placeholder="Ruta de Imagen (Opcional)" class="form-control">
+            <div style="grid-column:1/-1;">
+              <label style="font-size:0.8rem; font-weight:600;">Rutas / URLs Manuales de las 3 Imágenes (Opcional)</label>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                <input type="text" id="newProdImgUrl" class="form-control" placeholder="1. Principal (Frontal)">
+                <input type="text" id="newProdImg2Url" class="form-control" placeholder="2. Secundaria (Uso)">
+                <input type="text" id="newProdImg3Url" class="form-control" placeholder="3. Terciaria (Detalle)">
+              </div>
+            </div>
           </div>
 
-          <!-- New Drag and Drop Image & PDF Uploader -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; margin-bottom:10px;">
+          <!-- New Drag and Drop 3 Images & PDF Uploader -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-top: 10px; margin-bottom:10px;">
             <div>
-              <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Subir Imagen (Arrastrar o Buscar)</label>
+              <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">1. Principal (Frontal)</label>
               <div class="upload-dropzone" id="newProdImgDropzone" onclick="document.getElementById('newProdImgFile').click()" 
                    ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
                    ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
                    ondrop="handleDropEvent(event, this)"
-                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
-                <span style="font-size: 1.5rem;">🖼️</span>
-                <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir imagen</p>
+                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                <span style="font-size: 1.2rem;">🖼️</span>
+                <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
                 <input type="file" id="newProdImgFile" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'newProdImgPreview', 'newProdImgUrl')">
               </div>
-              <div id="newProdImgPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+              <div id="newProdImgPreview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
             </div>
 
             <div>
-              <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:6px;">Ficha Técnica / Manual (PDF)</label>
+              <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">2. Secundaria (Uso)</label>
+              <div class="upload-dropzone" id="newProdImg2Dropzone" onclick="document.getElementById('newProdImg2File').click()" 
+                   ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                   ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                   ondrop="handleDropEvent(event, this)"
+                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                <span style="font-size: 1.2rem;">🖼️</span>
+                <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
+                <input type="file" id="newProdImg2File" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'newProdImg2Preview', 'newProdImg2Url')">
+              </div>
+              <div id="newProdImg2Preview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
+            </div>
+
+            <div>
+              <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">3. Terciaria (Detalle)</label>
+              <div class="upload-dropzone" id="newProdImg3Dropzone" onclick="document.getElementById('newProdImg3File').click()" 
+                   ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
+                   ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
+                   ondrop="handleDropEvent(event, this)"
+                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                <span style="font-size: 1.2rem;">🖼️</span>
+                <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
+                <input type="file" id="newProdImg3File" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'newProdImg3Preview', 'newProdImg3Url')">
+              </div>
+              <div id="newProdImg3Preview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
+            </div>
+
+            <div>
+              <label style="font-size:0.75rem; font-weight:600; display:block; margin-bottom:4px;">Manual / Ficha (PDF)</label>
               <div class="upload-dropzone" id="newProdPdfDropzone" onclick="document.getElementById('newProdPdfFile').click()" 
                    ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='#F0FDFA';"
                    ondragleave="this.style.borderColor='var(--border)'; this.style.background='#FFF';"
                    ondrop="handleDropEvent(event, this)"
-                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
-                <span style="font-size: 1.5rem;">📄</span>
-                <p style="margin: 6px 0 0 0; font-size: 0.8rem; color: var(--text-muted);">Arrastra o haz clic para subir PDF</p>
+                   style="border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.2s; background: #FFF;">
+                <span style="font-size: 1.2rem;">📄</span>
+                <p style="margin: 4px 0 0 0; font-size: 0.7rem; color: var(--text-muted);">Arrastra o haz clic</p>
                 <input type="file" id="newProdPdfFile" accept="application/pdf" style="display:none;" onchange="handleFileSelect(this, 'newProdPdfPreview', 'newProdPdfData')">
               </div>
               <input type="hidden" id="newProdPdfData">
-              <div id="newProdPdfPreview" style="margin-top: 8px; display: flex; align-items: center; gap: 8px;"></div>
+              <div id="newProdPdfPreview" style="margin-top: 6px; display: flex; align-items: center; gap: 6px;"></div>
             </div>
           </div>
 
@@ -2193,19 +2260,29 @@ function showEditProductForm(productId) {
   document.getElementById('editProdOldPrice').value = product.oldPrice || '';
   document.getElementById('editProdBadge').value = product.badge || '';
   document.getElementById('editProdImgUrl').value = product.imgUrl || '';
+  document.getElementById('editProdImg2Url').value = product.imgUrl2 || '';
+  document.getElementById('editProdImg3Url').value = product.imgUrl3 || '';
   document.getElementById('editProdDesc').value = product.desc;
 
-  const imgPreview = document.getElementById('editProdImgPreview');
-  if (imgPreview) {
-    if (product.imgUrl) {
-      imgPreview.innerHTML = `
-        <img src="${product.imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />
-        <span style="font-size:0.8rem; color:var(--success); font-weight:600;">✓ Imagen cargada</span>
-      `;
-    } else {
-      imgPreview.innerHTML = '';
+  const previews = [
+    { url: product.imgUrl, id: 'editProdImgPreview' },
+    { url: product.imgUrl2, id: 'editProdImg2Preview' },
+    { url: product.imgUrl3, id: 'editProdImg3Preview' }
+  ];
+
+  previews.forEach(p => {
+    const el = document.getElementById(p.id);
+    if (el) {
+      if (p.url) {
+        el.innerHTML = `
+          <img src="${p.url}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--border);" />
+          <span style="font-size:0.7rem; color:var(--success); font-weight:600;">✓ Cargada</span>
+        `;
+      } else {
+        el.innerHTML = '';
+      }
     }
-  }
+  });
 
   document.getElementById('editProdPdfData').value = product.manualPdfUrl || '';
   const pdfPreview = document.getElementById('editProdPdfPreview');
@@ -2213,7 +2290,7 @@ function showEditProductForm(productId) {
     if (product.manualPdfUrl) {
       pdfPreview.innerHTML = `
         <span style="font-size:1.2rem;">📄</span>
-        <span style="font-size:0.8rem; color:var(--success); font-weight:600;">✓ PDF cargado</span>
+        <span style="font-size:0.7rem; color:var(--success); font-weight:600;">✓ Cargado</span>
       `;
     } else {
       pdfPreview.innerHTML = '';
@@ -2296,6 +2373,8 @@ function adminSaveEditProduct(event) {
   product.oldPrice = oldPriceVal ? parseInt(oldPriceVal, 10) : Math.round(product.price * 1.25);
   product.badge = document.getElementById('editProdBadge').value.trim();
   product.imgUrl = document.getElementById('editProdImgUrl').value.trim();
+  product.imgUrl2 = document.getElementById('editProdImg2Url').value.trim();
+  product.imgUrl3 = document.getElementById('editProdImg3Url').value.trim();
   product.manualPdfUrl = document.getElementById('editProdPdfData').value.trim();
   product.desc = document.getElementById('editProdDesc').value.trim();
 
@@ -2314,6 +2393,8 @@ function adminCreateProduct(event) {
   const badge = document.getElementById('newProdBadge').value || 'Nuevo';
   const desc = document.getElementById('newProdDesc').value;
   const imgUrl = document.getElementById('newProdImgUrl').value.trim();
+  const imgUrl2 = document.getElementById('newProdImg2Url').value.trim();
+  const imgUrl3 = document.getElementById('newProdImg3Url').value.trim();
   const manualPdfUrl = document.getElementById('newProdPdfData').value.trim();
 
   const categoryNames = {
@@ -2337,6 +2418,8 @@ function adminCreateProduct(event) {
     badge: badge,
     desc: desc,
     imgUrl: imgUrl,
+    imgUrl2: imgUrl2,
+    imgUrl3: imgUrl3,
     manualPdfUrl: manualPdfUrl,
     svgIcon: `<svg viewBox="0 0 200 200" width="120" height="120"><circle cx="100" cy="100" r="70" fill="#0D9488"/><circle cx="100" cy="100" r="30" fill="#F97316"/></svg>`
   };

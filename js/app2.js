@@ -2334,113 +2334,42 @@ function logoutUser() {
   showToast('Sesión cerrada correctamente. ¡Hasta pronto!');
 }
 
-// ─── Social Login Handler ─────────────────────────────────────────────────
-const SOCIAL_PROVIDERS = {
-  google: {
-    name: 'Google',
-    icon: '🌐',
-    loginUrl: 'https://accounts.google.com/ServiceLogin',
-    defaultEmail: 'usuario@gmail.com'
-  },
-  microsoft: {
-    name: 'Microsoft / Outlook',
-    icon: '🔷',
-    loginUrl: 'https://login.live.com/',
-    defaultEmail: 'usuario@outlook.com'
-  },
-  facebook: {
-    name: 'Facebook',
-    icon: '🔵',
-    loginUrl: 'https://www.facebook.com/login/',
-    defaultEmail: 'usuario@facebook.com'
-  }
-};
-
-function handleSocialLogin(providerKey) {
-  const provider = SOCIAL_PROVIDERS[providerKey] || {
-    name: providerKey,
-    icon: '🌐',
-    loginUrl: 'https://google.com',
-    defaultEmail: `usuario@${providerKey}.com`
+// ─── Social Login Handler (1-Click Instant Fast Access) ─────────────────────
+function handleSocialLogin(provider) {
+  const providers = {
+    google: { name: 'Google', domain: 'gmail.com', defaultName: 'Cliente Google' },
+    microsoft: { name: 'Microsoft / Outlook', domain: 'outlook.com', defaultName: 'Cliente Outlook' },
+    facebook: { name: 'Facebook', domain: 'facebook.com', defaultName: 'Cliente Facebook' }
   };
 
-  // 1. Open official provider login page in a popup window
-  try {
-    const popupWidth = 550;
-    const popupHeight = 650;
-    const left = (window.screen.width - popupWidth) / 2;
-    const top = (window.screen.height - popupHeight) / 2;
-    window.open(
-      provider.loginUrl,
-      `Login_${providerKey}`,
-      `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes,resizable=yes`
-    );
-  } catch (e) {
-    console.warn('Popup open error:', e);
-  }
+  const p = providers[provider] || { name: provider, domain: 'correo.com', defaultName: 'Usuario Social' };
 
-  // 2. Close main auth modal and open interactive Social Auth modal
-  closeAuthModal();
+  // Check if existing social user or create new seamless account
+  const email = `cliente.${provider}@${p.domain}`;
+  let user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-  const overlay = document.getElementById('socialAuthOverlay');
-  const modal = document.getElementById('socialAuthModal');
-  if (!overlay || !modal) return;
-
-  document.getElementById('socialProviderInput').value = providerKey;
-  document.getElementById('socialAuthIcon').textContent = provider.icon;
-  document.getElementById('socialAuthTitle').textContent = `Conectar con ${provider.name}`;
-  document.getElementById('socialAuthSubtitle').textContent = `Vincula tu cuenta de ${provider.name} a FIXIO`;
-  document.getElementById('socialAuthNotice').textContent = `Se abrió la ventana de ${provider.name}. Confirma tu correo y nombre para iniciar sesión en FIXIO.`;
-  document.getElementById('socialSubmitBtn').textContent = `🚀 Ingresar con ${provider.name}`;
-
-  // Prefill default email if empty
-  const emailInput = document.getElementById('socialEmailInput');
-  const nameInput = document.getElementById('socialNameInput');
-  if (emailInput && !emailInput.value) emailInput.value = provider.defaultEmail;
-  if (nameInput && !nameInput.value) nameInput.value = `Usuario ${provider.name}`;
-
-  overlay.classList.add('active');
-  modal.classList.add('active');
-}
-
-function closeSocialAuthModal() {
-  document.getElementById('socialAuthOverlay')?.classList.remove('active');
-  document.getElementById('socialAuthModal')?.classList.remove('active');
-}
-
-function confirmSocialLoginSubmit(event) {
-  event.preventDefault();
-  const providerKey = document.getElementById('socialProviderInput').value || 'google';
-  const name = document.getElementById('socialNameInput').value.trim();
-  const email = document.getElementById('socialEmailInput').value.trim().toLowerCase();
-  const phone = document.getElementById('socialPhoneInput')?.value.trim() || '300 000 0000';
-
-  const providerObj = SOCIAL_PROVIDERS[providerKey] || { name: providerKey };
-
-  let user = registeredUsers.find(u => u.email.toLowerCase() === email);
-
-  if (user) {
-    currentUser = user;
-  } else {
+  if (!user) {
     user = {
-      name: name,
+      name: p.defaultName,
       email: email,
       pass: null,
       role: 'customer',
       address: 'Bogotá, Colombia',
-      phone: phone,
-      provider: providerKey
+      phone: '310 000 0000',
+      provider: provider
     };
     registeredUsers.push(user);
     localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
-    currentUser = user;
   }
 
+  currentUser = user;
   localStorage.setItem('fixio_user', JSON.stringify(currentUser));
-  renderHeaderAuth();
-  closeSocialAuthModal();
-  showToast(`🎉 ¡Sesión iniciada con ${providerObj.name}! Bienvenido, ${currentUser.name}.`);
 
+  renderHeaderAuth();
+  closeAuthModal();
+  showToast(`🎉 ¡Sesión iniciada con ${p.name}! Bienvenido, ${currentUser.name}.`);
+
+  // If user was attempting checkout, proceed directly to Checkout Modal
   if (authIntent === 'checkout_required') {
     openCheckoutModal();
   }

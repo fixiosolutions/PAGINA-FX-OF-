@@ -102,30 +102,10 @@
         </div>
       </div>
 
-      <!-- Hero Featured Product Card -->
+      <!-- Hero Dynamic Carousel / Slider Container -->
       <div class="hero-visual">
-        <div class="featured-product-card">
-          <span class="featured-tag">🔥 PRODUCTO ESTRELLA</span>
-          <div class="product-img-wrapper">
-            <svg viewBox="0 0 200 200" width="180" height="180">
-              <rect x="50" y="30" width="100" height="140" rx="20" fill="#0D9488"/>
-              <rect x="60" y="45" width="80" height="65" rx="12" fill="#2DD4BF"/>
-              <circle cx="100" cy="145" r="18" fill="#FFF"/>
-              <circle cx="100" cy="145" r="10" fill="#0F172A"/>
-              <path d="M70 172 Q100 185 130 172" stroke="#F97316" stroke-width="6" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <h3 style="font-size:1.2rem; font-weight:700;">Alimentador Inteligente IMIPAW 3L Wi-Fi</h3>
-          <p style="font-size:0.85rem; color:var(--text-muted); margin:6px 0;">Control por App móvil, porciones programables, doble alimentación USB y baterías de respaldo.</p>
-          
-          <div class="price-tag">
-            <span class="price-current">$250.000 COP</span>
-            <span class="price-old">$320.000 COP</span>
-          </div>
-
-          <button class="btn btn-accent" onclick="addToCart('FX-001')" style="width:100%;">
-            🛒 Agregar al Carrito — $250.000
-          </button>
+        <div class="hero-slider-container" id="heroSliderContainer">
+          <!-- Rendered dynamically by renderHeroSlider() in app2.js -->
         </div>
       </div>
     </div>
@@ -762,6 +742,7 @@
       <button class="admin-tab-btn" data-tab="orders" onclick="switchAdminTab('orders')">🚚 Pedidos</button>
       <button class="admin-tab-btn" data-tab="customers" onclick="switchAdminTab('customers')">👥 Clientes & Suscriptores</button>
       <button class="admin-tab-btn" data-tab="blog" onclick="switchAdminTab('blog')">📝 Blog & Consejos</button>
+      <button class="admin-tab-btn" data-tab="banners" onclick="switchAdminTab('banners')">🖼️ Banners Hero</button>
     </div>
 
     <div id="adminTabContent">

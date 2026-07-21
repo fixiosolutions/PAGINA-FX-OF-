@@ -1869,6 +1869,112 @@ function switchAdminTab(tabName) {
         </tbody>
       </table>
     `;
+  } else if (tabName === 'banners') {
+    container.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h4>🖼️ Banners del Carrusel Principal (${heroSlides.length})</h4>
+        <button class="btn btn-primary" onclick="showCreateSlideForm()" style="padding:8px 14px; font-size:0.85rem;">+ Agregar Banner</button>
+      </div>
+
+      <!-- EDIT SLIDE FORM -->
+      <div id="editSlideFormContainer" style="display:none; background:var(--light-bg); padding:20px; border-radius:var(--radius-md); border:1.5px solid var(--primary-light); margin-bottom:20px;">
+        <h5 style="margin-bottom:14px; font-size:1rem; color:var(--primary-dark);">✏️ Editar Banner del Carrusel</h5>
+        <form onsubmit="adminSaveSlide(event)">
+          <input type="hidden" id="editSlideId">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:0.8rem; font-weight:600;">Etiqueta / Tag (ej: 🔥 PRODUCTO ESTRELLA)</label>
+              <input type="text" id="editSlideTag" class="form-control" required>
+            </div>
+            <div>
+              <label style="font-size:0.8rem; font-weight:600;">Título del Producto / Banner</label>
+              <input type="text" id="editSlideTitle" class="form-control" required>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:0.8rem; font-weight:600;">Descripción Corta</label>
+            <textarea id="editSlideDesc" class="form-control" rows="2" required></textarea>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:0.8rem; font-weight:600;">Precio Actual (ej: $250.000 COP)</label>
+              <input type="text" id="editSlidePrice" class="form-control" required>
+            </div>
+            <div>
+              <label style="font-size:0.8rem; font-weight:600;">Precio Anterior (Opcional)</label>
+              <input type="text" id="editSlidePriceOld" class="form-control">
+            </div>
+            <div>
+              <label style="font-size:0.8rem; font-weight:600;">ID Producto (ej: FX-001)</label>
+              <input type="text" id="editSlideProductId" class="form-control" required>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-size:0.8rem; font-weight:600;">Ruta / URL de la Imagen (ej: MATERIAL/img-fx001.png)</label>
+            <input type="text" id="editSlideImage" class="form-control" required>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-primary" style="padding:8px 18px; font-size:0.85rem;">💾 Guardar Cambios</button>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('editSlideFormContainer').style.display='none'" style="padding:8px 16px; font-size:0.85rem;">Cancelar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- CREATE SLIDE FORM -->
+      <div id="createSlideFormContainer" style="display:none; background:var(--light-bg); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:20px;">
+        <h5 style="margin-bottom:14px; font-size:1rem;">🖼️ Nuevo Banner para el Carrusel</h5>
+        <form onsubmit="adminCreateSlide(event)">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <input type="text" id="newSlideTag" placeholder="Tag (ej: 🔥 NOVEDAD)" class="form-control" required>
+            <input type="text" id="newSlideTitle" placeholder="Título del banner" class="form-control" required>
+          </div>
+          <textarea id="newSlideDesc" placeholder="Descripción corta del producto o promoción..." class="form-control" rows="2" required style="margin-bottom:12px;"></textarea>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+            <input type="text" id="newSlidePrice" placeholder="Precio (ej: $250.000 COP)" class="form-control" required>
+            <input type="text" id="newSlidePriceOld" placeholder="Precio Anterior (ej: $320.000 COP)" class="form-control">
+            <input type="text" id="newSlideProductId" placeholder="ID Producto (ej: FX-001)" class="form-control" required>
+          </div>
+          <input type="text" id="newSlideImage" placeholder="Ruta de Imagen (ej: MATERIAL/img-fx001.png)" class="form-control" required style="margin-bottom:14px;">
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-accent" style="padding:8px 16px; font-size:0.85rem;">🚀 Publicar Banner</button>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('createSlideFormContainer').style.display='none'" style="padding:8px 16px; font-size:0.85rem;">Cancelar</button>
+          </div>
+        </form>
+      </div>
+
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Imagen</th>
+            <th>Tag & Título</th>
+            <th>Precio</th>
+            <th>ID Prod</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${heroSlides.map(s => `
+            <tr>
+              <td>
+                <img src="${s.image}" width="45" height="45" style="object-fit:cover; border-radius:8px; border:1px solid var(--border);" onerror="this.src='https://via.placeholder.com/45';" />
+              </td>
+              <td>
+                <span class="badge-category" style="position:static; font-size:0.7rem;">${s.tag}</span><br>
+                <strong>${s.title}</strong>
+              </td>
+              <td><strong>${s.price}</strong></td>
+              <td><code>${s.productId}</code></td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-outline" onclick="showEditSlideForm('${s.id}')" style="padding:5px 12px; font-size:0.78rem; border-color:var(--primary); color:var(--primary-dark); font-weight:600;">✏️ Editar</button>
+                  <button class="btn btn-outline" onclick="adminDeleteSlide('${s.id}')" style="padding:5px 12px; font-size:0.78rem; border-color:var(--danger); color:var(--danger); font-weight:600;">🗑️ Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
   }
 }
 
@@ -2452,6 +2558,211 @@ function completeSocialAuth(name, email, provider) {
   }
 }
 
+// ─── HERO CAROUSEL / SLIDER CONTROLLER & ADMIN ────────────────────────────
+let heroSlides = JSON.parse(localStorage.getItem('fixio_hero_slides') || '[]');
+if (heroSlides.length === 0) {
+  heroSlides = [
+    {
+      id: "SLIDE-001",
+      tag: "🔥 PRODUCTO ESTRELLA",
+      title: "Alimentador Inteligente IMIPAW 3L Wi-Fi",
+      desc: "Control por App móvil, porciones programables, doble alimentación USB y baterías de respaldo.",
+      price: "$250.000 COP",
+      priceOld: "$320.000 COP",
+      image: "MATERIAL/img-fx001.png",
+      productId: "FX-001"
+    },
+    {
+      id: "SLIDE-002",
+      tag: "💧 SALUD Y MASCOTAS",
+      title: "Dispensador de Agua Automático con Filtro Triple",
+      desc: "Filtración cuádruple continua y bomba ultrasilenciosa para agua 100% fresca todo el día.",
+      price: "$95.000 COP",
+      priceOld: "$130.000 COP",
+      image: "MATERIAL/img-fx002.png",
+      productId: "FX-002"
+    },
+    {
+      id: "SLIDE-003",
+      tag: "💻 ERGONOMÍA & OFICINA",
+      title: "Soporte Ergonómico Plegable para Laptop",
+      desc: "Ajustable en 6 alturas con disipación térmica activa. Ideal para postura en teletrabajo.",
+      price: "$85.000 COP",
+      priceOld: "$115.000 COP",
+      image: "MATERIAL/img-fx003.png",
+      productId: "FX-003"
+    },
+    {
+      id: "SLIDE-004",
+      tag: "💡 ILUMINACIÓN HOGAR",
+      title: "Lámpara LED Recargable con Sensor de Movimiento",
+      desc: "Encendido automático infrarrojo sin cables para gabinetes, armarios y pasillos.",
+      price: "$48.000 COP",
+      priceOld: "$65.000 COP",
+      image: "MATERIAL/img-fx004.png",
+      productId: "FX-004"
+    }
+  ];
+  localStorage.setItem('fixio_hero_slides', JSON.stringify(heroSlides));
+}
+
+let currentSlideIdx = 0;
+let heroAutoplayTimer = null;
+
+function renderHeroSlider() {
+  const container = document.getElementById('heroSliderContainer');
+  if (!container || heroSlides.length === 0) return;
+
+  if (currentSlideIdx >= heroSlides.length) currentSlideIdx = 0;
+
+  const slidesHtml = heroSlides.map((slide, idx) => `
+    <div class="hero-slide ${idx === currentSlideIdx ? 'active' : ''}">
+      <div class="featured-product-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+        <span class="featured-tag">${slide.tag}</span>
+        <div class="product-img-wrapper" style="height: 210px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; margin: 12px 0; background:#FAFBFD;">
+          <img src="${slide.image}" alt="${slide.title}" style="max-height: 100%; max-width: 100%; object-fit: contain;" onerror="this.style.display='none';" />
+        </div>
+        <h3 style="font-size:1.2rem; font-weight:700; color:var(--dark); margin-bottom:6px;">${slide.title}</h3>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">${slide.desc}</p>
+        <div class="price-tag" style="margin-bottom:14px;">
+          <span class="price-current">${slide.price}</span>
+          ${slide.priceOld ? `<span class="price-old">${slide.priceOld}</span>` : ''}
+        </div>
+        <button class="btn btn-accent" onclick="addToCart('${slide.productId}')" style="width:100%; font-weight:700;">
+          🛒 Agregar al Carrito — ${slide.price}
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  const arrowsHtml = heroSlides.length > 1 ? `
+    <div class="hero-slider-arrows">
+      <button class="hero-slider-arrow" onclick="prevHeroSlide()" title="Anterior">❮</button>
+      <button class="hero-slider-arrow" onclick="nextHeroSlide()" title="Siguiente">❯</button>
+    </div>
+  ` : '';
+
+  const dotsHtml = heroSlides.length > 1 ? `
+    <div class="hero-slider-dots">
+      ${heroSlides.map((_, idx) => `
+        <span class="hero-slider-dot ${idx === currentSlideIdx ? 'active' : ''}" onclick="goToHeroSlide(${idx})"></span>
+      `).join('')}
+    </div>
+  ` : '';
+
+  container.innerHTML = slidesHtml + arrowsHtml + dotsHtml;
+}
+
+function nextHeroSlide() {
+  currentSlideIdx = (currentSlideIdx + 1) % heroSlides.length;
+  renderHeroSlider();
+  startHeroAutoplay();
+}
+
+function prevHeroSlide() {
+  currentSlideIdx = (currentSlideIdx - 1 + heroSlides.length) % heroSlides.length;
+  renderHeroSlider();
+  startHeroAutoplay();
+}
+
+function goToHeroSlide(idx) {
+  currentSlideIdx = idx;
+  renderHeroSlider();
+  startHeroAutoplay();
+}
+
+function startHeroAutoplay() {
+  if (heroAutoplayTimer) clearInterval(heroAutoplayTimer);
+  heroAutoplayTimer = setInterval(() => {
+    if (heroSlides.length > 1) {
+      currentSlideIdx = (currentSlideIdx + 1) % heroSlides.length;
+      renderHeroSlider();
+    }
+  }, 4000);
+}
+
+// ─── ADMIN BANNER / HERO SLIDE MANAGEMENT ─────────────────────────────────
+function showCreateSlideForm() {
+  const container = document.getElementById('createSlideFormContainer');
+  if (container) container.style.display = 'block';
+}
+
+function showEditSlideForm(slideId) {
+  const slide = heroSlides.find(s => s.id === slideId);
+  if (!slide) return;
+
+  const container = document.getElementById('editSlideFormContainer');
+  if (!container) return;
+
+  document.getElementById('editSlideId').value = slide.id;
+  document.getElementById('editSlideTag').value = slide.tag;
+  document.getElementById('editSlideTitle').value = slide.title;
+  document.getElementById('editSlideDesc').value = slide.desc;
+  document.getElementById('editSlidePrice').value = slide.price;
+  document.getElementById('editSlidePriceOld').value = slide.priceOld || '';
+  document.getElementById('editSlideProductId').value = slide.productId;
+  document.getElementById('editSlideImage').value = slide.image;
+
+  container.style.display = 'block';
+  container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function adminCreateSlide(event) {
+  event.preventDefault();
+  const tag = document.getElementById('newSlideTag').value.trim();
+  const title = document.getElementById('newSlideTitle').value.trim();
+  const desc = document.getElementById('newSlideDesc').value.trim();
+  const price = document.getElementById('newSlidePrice').value.trim();
+  const priceOld = document.getElementById('newSlidePriceOld').value.trim();
+  const productId = document.getElementById('newSlideProductId').value.trim();
+  const image = document.getElementById('newSlideImage').value.trim();
+
+  const newSlide = {
+    id: 'SLIDE-' + Date.now(),
+    tag, title, desc, price, priceOld, productId, image
+  };
+
+  heroSlides.push(newSlide);
+  localStorage.setItem('fixio_hero_slides', JSON.stringify(heroSlides));
+
+  renderHeroSlider();
+  switchAdminTab('banners');
+  showToast('🖼️ Nuevo Banner agregado al Carrusel Principal');
+}
+
+function adminSaveSlide(event) {
+  event.preventDefault();
+  const slideId = document.getElementById('editSlideId').value;
+  const slide = heroSlides.find(s => s.id === slideId);
+  if (!slide) return;
+
+  slide.tag = document.getElementById('editSlideTag').value.trim();
+  slide.title = document.getElementById('editSlideTitle').value.trim();
+  slide.desc = document.getElementById('editSlideDesc').value.trim();
+  slide.price = document.getElementById('editSlidePrice').value.trim();
+  slide.priceOld = document.getElementById('editSlidePriceOld').value.trim();
+  slide.productId = document.getElementById('editSlideProductId').value.trim();
+  slide.image = document.getElementById('editSlideImage').value.trim();
+
+  localStorage.setItem('fixio_hero_slides', JSON.stringify(heroSlides));
+
+  renderHeroSlider();
+  switchAdminTab('banners');
+  showToast('✅ Banner actualizado correctamente');
+}
+
+function adminDeleteSlide(slideId) {
+  if (!confirm('¿Estás seguro de eliminar este Banner del Carrusel?')) return;
+
+  heroSlides = heroSlides.filter(s => s.id !== slideId);
+  localStorage.setItem('fixio_hero_slides', JSON.stringify(heroSlides));
+
+  currentSlideIdx = 0;
+  renderHeroSlider();
+  switchAdminTab('banners');
+  showToast('🗑️ Banner eliminado del Carrusel');
+}
+
 // ─── Toggle Password Visibility ───────────────────────────────────────────
 function togglePasswordVisibility(inputId, btn) {
   const input = document.getElementById(inputId);
@@ -2463,4 +2774,15 @@ function togglePasswordVisibility(inputId, btn) {
   btn.innerHTML = isPassword
     ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
     : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
+// Initial render for Hero Slider on page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    renderHeroSlider();
+    startHeroAutoplay();
+  });
+} else {
+  renderHeroSlider();
+  startHeroAutoplay();
 }

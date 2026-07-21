@@ -2694,3 +2694,83 @@ button, input, select, textarea {
 }
 .my-orders-btn:hover { background: var(--primary-light); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
 
+/* ═══════════════════════════════════════════════════
+   HERO CAROUSEL / SLIDER STYLES
+   ═══════════════════════════════════════════════════ */
+.hero-slider-container {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.hero-slide {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.hero-slide.active {
+  display: block;
+  opacity: 1;
+}
+
+.hero-slider-arrows {
+  position: absolute;
+  top: 45%;
+  left: -14px;
+  right: -14px;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hero-slider-arrow {
+  pointer-events: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--dark);
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.hero-slider-arrow:hover {
+  background: var(--primary);
+  color: #FFF;
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+.hero-slider-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.hero-slider-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hero-slider-dot.active {
+  width: 28px;
+  border-radius: 10px;
+  background: var(--primary);
+}
+

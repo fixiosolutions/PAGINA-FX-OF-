@@ -6,17 +6,17 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Agent / Planning files (not needed in production)
+# Agent / Planning files
 .agents/
 _bmad/
 _bmad-output/
 
-# Design artifacts (internal)
+# Design artifacts & documentation (internal)
 design-artifacts/
-
-# Planning documents (internal)
 MATERIAL_PAGINA_WEB.txt
 MATERIAL_PLANEACION_PRODUCTOS.txt
+Guia_Panel_Administrador.md
+*.pdf
 
 # Logs
 *.log

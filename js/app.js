@@ -562,7 +562,12 @@ function renderCartDrawer() {
 
     ${cart.map(item => `
       <div class="cart-item">
-        <div class="cart-item-img">${item.svgIcon}</div>
+        <div class="cart-item-img">
+          ${item.imgUrl 
+            ? `<img src="${item.imgUrl}" alt="${item.name}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;" />` 
+            : item.svgIcon
+          }
+        </div>
         <div class="cart-item-info">
           <div class="cart-item-title">${item.name}</div>
           <div class="cart-item-price">$${formatNumber(item.price)} COP</div>

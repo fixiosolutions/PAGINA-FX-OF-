@@ -2910,7 +2910,7 @@ function renderHeroSlider() {
     <div class="hero-slide ${idx === currentSlideIdx ? 'active' : ''}">
       <div class="featured-product-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
         <span class="featured-tag">${slide.tag}</span>
-        <div class="product-img-wrapper" style="height: 210px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; margin: 12px 0; background:#FAFBFD;">
+        <div class="product-img-wrapper" style="height: 210px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; margin: 0 0 14px 0; background:#FAFBFD;">
           <img src="${slide.image}" alt="${slide.title}" style="max-height: 100%; max-width: 100%; object-fit: contain;" onerror="this.style.display='none';" />
         </div>
         <h3 style="font-size:1.2rem; font-weight:700; color:var(--dark); margin-bottom:6px;">${slide.title}</h3>

@@ -2,56 +2,57 @@
    FIXIO SOLUTIONS - DESIGN SYSTEM & STYLESHEET
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Color Palette - FIXIO Institucional */
-  --primary: #1E6BB8;       /* Azul Institucional */
-  --primary-light: #C8E4F9; /* Azul Digital Claro */
-  --primary-dark: #0C355A;  /* Azul Navy / Oscuro */
-  --primary-glow: rgba(30, 107, 184, 0.15);
+  /* Color Palette - FIXIO Premium Harmonized Scheme */
+  --primary: #0F766E;       /* Teal/Esmeralda Oscura */
+  --primary-light: #CCFBF1; /* Teal Claro */
+  --primary-dark: #115E59;  /* Teal Profundo */
+  --primary-glow: rgba(15, 118, 110, 0.12);
 
-  --accent: #5BA045;        /* Verde Institucional */
-  --accent-hover: #4d8939;  
-  --accent-glow: rgba(91, 160, 69, 0.2);
+  --accent: #F97316;        /* Naranja Vibrante (Acciones / CTA) */
+  --accent-hover: #EA580C;  
+  --accent-glow: rgba(249, 115, 22, 0.15);
 
-  --dark: #333333;          /* Gris Oscuro Digital */
-  --dark-surface: #2E2E2E;  
-  --dark-muted: #7A7A7A;    /* Gris Institucional */
+  --dark: #0F172A;          /* Slate Dark (Muy elegante) */
+  --dark-surface: #1E293B;  
+  --dark-muted: #475569;    
 
-  --light-bg: #F5F6F7;      /* Fondo Digital Claro */
+  --light-bg: #F8FAFC;      /* Fondo Slate Claro */
   --surface: #FFFFFF;
-  --surface-alt: #FAFAFA;
+  --surface-alt: #F1F5F9;
 
-  --border: #EAEAEA;
-  --border-focus: #1E6BB8;
+  --border: #E2E8F0;
+  --border-focus: #0F766E;
 
-  --text-main: #333333;
-  --text-muted: #7A7A7A;
-  --text-light: #BDBDBD;
+  --text-main: #1E293B;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
 
-  --success: #7ED957;       /* Verde Claro Digital */
+  --success: #10B981;       
   --warning: #F59E0B;
   --danger: #EF4444;
 
   /* Fonts */
-  --font-heading: 'Montserrat', sans-serif;
-  --font-body: 'Open Sans', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
 
   /* Shadows - Corporate and clean, not glowing */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-  --shadow-glow: var(--shadow-md); /* Removing neon glow */
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 20px 48px rgba(15, 23, 42, 0.08);
+  --shadow-glow: rgba(15, 118, 110, 0.25) 0px 10px 30px;
 
   /* Radius & Transitions */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
   --radius-full: 9999px;
 
-  --transition-fast: all 0.2s ease;
-  --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Base resets */

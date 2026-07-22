@@ -823,7 +823,20 @@ function toggleWompiNotice(value) {
   if (notice) notice.style.display = value.includes('Wompi') ? 'block' : 'none';
 }
 
-function processCheckout(event) {
+async function getWompiAcceptanceToken(publicKey) {
+  const isProd = publicKey.startsWith('pub_prod');
+  const baseUrl = isProd ? 'https://api.wompi.co/v1' : 'https://sandbox.wompi.co/v1';
+  try {
+    const res = await fetch(`${baseUrl}/merchants/${publicKey}`);
+    const data = await res.json();
+    return data.data.presigned_acceptance.acceptance_token;
+  } catch (err) {
+    console.error('Error fetching Wompi acceptance token:', err);
+    return null;
+  }
+}
+
+async function processCheckout(event) {
   event.preventDefault();
   const name = document.getElementById('custName').value.trim();
   const email = document.getElementById('custEmail')?.value.trim() || (currentUser?.email || 'cliente@fixio.com');
@@ -874,26 +887,30 @@ function processCheckout(event) {
   };
 
   // ── Wompi Gateway (sólo activo en producción con pub_prod_...) ──────────────
-  if (payment.includes('Wompi') && typeof WidgetCheckout !== 'undefined') {
+  if (payment.includes('Wompi')) {
     try {
-      const checkout = new WidgetCheckout({
-        currency: 'COP',
-        amountInCents: finalTotal * 100,
-        reference: orderNum,
-        publicKey: WOMPI_CONFIG.publicKey,
-        customerData: {
-          email: email,
-          fullName: name,
-          phoneNumber: phone,
-          phoneNumberPrefix: '+57'
-        }
-      });
-      checkout.open(function (result) {
-        completeOrderRegistration(newOrder, discountAmount, finalShipping, finalTotal);
-      });
-      return; // Wait for Wompi callback
+      const acceptanceToken = await getWompiAcceptanceToken(WOMPI_CONFIG.publicKey);
+      if (typeof WidgetCheckout !== 'undefined') {
+        const checkout = new WidgetCheckout({
+          currency: 'COP',
+          amountInCents: finalTotal * 100,
+          reference: orderNum,
+          publicKey: WOMPI_CONFIG.publicKey,
+          acceptanceToken: acceptanceToken,
+          customerData: {
+            email: email,
+            fullName: name,
+            phoneNumber: phone,
+            phoneNumberPrefix: '+57'
+          }
+        });
+        checkout.open(function (result) {
+          completeOrderRegistration(newOrder, discountAmount, finalShipping, finalTotal);
+        });
+        return; // Wait for Wompi callback
+      }
     } catch(err) {
-      console.warn('⚠️ Wompi no disponible en entorno local. Registrando pedido directamente:', err);
+      console.warn('⚠️ Wompi no disponible o error al generar el token. Registrando pedido directamente:', err);
       // Falls through to complete order below
     }
   }

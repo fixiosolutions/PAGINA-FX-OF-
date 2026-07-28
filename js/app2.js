@@ -313,6 +313,9 @@ const FIXIO_BACKEND = {
         this.client = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
         this.isCloudActive = true;
         console.log('⚡ FIXIO Backend Cloud Activo (Supabase Conectado)');
+
+        // Escuchar automáticamente la sesión de Supabase Auth (ej. al retornar de Google OAuth)
+        this.setupAuthListener();
       } catch (e) {
         console.warn('⚠️ Error al inicializar Supabase Cloud, usando fallback local:', e);
         this.isCloudActive = false;
@@ -320,6 +323,51 @@ const FIXIO_BACKEND = {
     } else {
       console.log('ℹ️ FIXIO Backend funcionando en Modo Local / Demo Seguro');
     }
+  },
+
+  setupAuthListener() {
+    if (!this.client) return;
+
+    // Capturar sesión entrante de Google OAuth o restauración de sesión Supabase
+    this.client.auth.onAuthStateChange(async (event, session) => {
+      console.log('[FIXIO Auth Event]', event, session?.user?.email);
+
+      if (session && session.user) {
+        const email = session.user.email;
+        const metadata = session.user.user_metadata || {};
+        const name = metadata.full_name || metadata.name || email.split('@')[0].replace(/[._\-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const isAdmin = email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase();
+
+        const googleUser = {
+          name: isAdmin ? ADMIN_CONFIG.name : name,
+          email: email,
+          role: isAdmin ? 'admin' : (metadata.role || 'customer'),
+          address: 'Bogotá D.C., Colombia',
+          phone: '+57 300 0000000',
+          provider: session.user.app_metadata?.provider || 'google'
+        };
+
+        const savedUser = await this.saveGoogleUser(googleUser);
+        currentUser = savedUser;
+        safeStorage.set('fixio_user', currentUser);
+
+        if (typeof renderHeaderAuth === 'function') {
+          renderHeaderAuth();
+        }
+
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+
+          showToast(`🎉 ¡Sesión activa como ${currentUser.name}!`);
+
+          if (currentUser.role === 'admin' && typeof openAdminModal === 'function') {
+            openAdminModal();
+          }
+        }
+      }
+    });
   },
 
   async signUp(email, password, userData) {
@@ -3520,7 +3568,10 @@ async function handleRegisterSubmit(event) {
 
 function logoutUser() {
   currentUser = null;
-  localStorage.removeItem('fixio_user');
+  safeStorage.remove('fixio_user');
+  if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
+    FIXIO_BACKEND.client.auth.signOut().catch(e => console.warn('[FIXIO] Error al cerrar sesión en Supabase:', e));
+  }
   renderHeaderAuth();
   showToast('Sesión cerrada correctamente. ¡Hasta pronto!');
 }

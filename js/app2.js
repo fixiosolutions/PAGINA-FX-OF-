@@ -121,11 +121,26 @@ const DEFAULT_PRODUCTS = [
   }
 ];
 
-// Persistent state with localStorage
-let PRODUCTS = JSON.parse(localStorage.getItem('fixio_products') || 'null');
+// SECURITY FIX B2: Helper seguro para localStorage (previene crash en modo incógnito o Safari privado)
+const safeStorage = {
+  get(key, fallback = null) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch { console.warn('[FIXIO] localStorage no disponible:', key); return false; }
+  },
+  remove(key) {
+    try { localStorage.removeItem(key); } catch { /* incógnito */ }
+  }
+};
+
+// Persistent state with localStorage (usando safeStorage)
+let PRODUCTS = safeStorage.get('fixio_products');
 if (!PRODUCTS) {
   PRODUCTS = DEFAULT_PRODUCTS;
-  localStorage.setItem('fixio_products', JSON.stringify(PRODUCTS));
+  safeStorage.set('fixio_products', PRODUCTS);
 } else {
   let updated = false;
   PRODUCTS.forEach(p => {
@@ -135,29 +150,29 @@ if (!PRODUCTS) {
       updated = true;
     }
   });
-  if (updated) {
-    localStorage.setItem('fixio_products', JSON.stringify(PRODUCTS));
-  }
+  if (updated) safeStorage.set('fixio_products', PRODUCTS);
 }
 
 function saveProducts() {
-  localStorage.setItem('fixio_products', JSON.stringify(PRODUCTS));
+  safeStorage.set('fixio_products', PRODUCTS);
 }
 
 // Cart & Orders & Auth State Management
-let cart = JSON.parse(localStorage.getItem('fixio_cart') || '[]');
-let orders = JSON.parse(localStorage.getItem('fixio_orders') || '[]');
-let subscribers = JSON.parse(localStorage.getItem('fixio_subscribers') || '[]');
+let cart = safeStorage.get('fixio_cart', []);
+let orders = safeStorage.get('fixio_orders', []);
+let subscribers = safeStorage.get('fixio_subscribers', []);
 
-// SECURITY HELPER: Helper to sanitize user objects for localStorage storage (strips passwords & sensitive tokens)
+// SECURITY HELPER: Sanitizar objetos de usuario para localStorage (elimina passwords)
 function sanitizeUserForStorage(user) {
   if (!user) return null;
   const clone = { ...user };
   delete clone.pass;
+  delete clone.password;
+  delete clone.token;
   return clone;
 }
 
-// SECURITY HELPER: Sanitize string to prevent XSS attacks
+// SECURITY HELPER: Sanitizar strings para prevenir XSS
 function sanitizeHTML(str) {
   if (!str) return '';
   return String(str)
@@ -168,10 +183,35 @@ function sanitizeHTML(str) {
     .replace(/'/g, '&#039;');
 }
 
-let currentUser = sanitizeUserForStorage(JSON.parse(localStorage.getItem('fixio_user') || 'null'));
-// Ensure any legacy stored currentUser has no pass property
+// SECURITY FIX B3: Rate limiting para intentos de login
+const LOGIN_RATE_LIMIT = {
+  attempts: safeStorage.get('fixio_login_attempts', { count: 0, since: 0 }),
+  MAX_ATTEMPTS: 5,
+  WINDOW_MS: 15 * 60 * 1000, // 15 minutos
+  check() {
+    const now = Date.now();
+    if (now - this.attempts.since > this.WINDOW_MS) {
+      this.attempts = { count: 0, since: now };
+    }
+    if (this.attempts.count >= this.MAX_ATTEMPTS) {
+      const wait = Math.ceil((this.WINDOW_MS - (now - this.attempts.since)) / 60000);
+      throw new Error(`🔒 Demasiados intentos fallidos. Espera ${wait} min o usa Google Sign-In.`);
+    }
+  },
+  fail() {
+    this.attempts.count++;
+    if (!this.attempts.since) this.attempts.since = Date.now();
+    safeStorage.set('fixio_login_attempts', this.attempts);
+  },
+  reset() {
+    this.attempts = { count: 0, since: 0 };
+    safeStorage.remove('fixio_login_attempts');
+  }
+};
+
+let currentUser = sanitizeUserForStorage(safeStorage.get('fixio_user'));
 if (currentUser) {
-  localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+  safeStorage.set('fixio_user', currentUser);
 }
 
 // FILE UPLOAD HELPERS (Data URL / Base64 conversion for Drag & Drop inputs)
@@ -246,12 +286,14 @@ async function processUploadedFile(file, previewElemId, targetInputId) {
   reader.readAsDataURL(file);
 }
 
-// ─── CONFIGURACIÓN DE CREDENCIALES ÚNICAS DE ADMINISTRADOR ──────────────────
+// ─── CONFIGURACIÓN DEL ADMINISTRADOR (sin contraseña en código fuente) ───────
+// SECURITY FIX C1: La contraseña NO se almacena en el frontend.
+// La autenticación de admin ocurre exclusivamente vía Google OAuth (Supabase).
 const ADMIN_CONFIG = {
   name: 'Administrador FIXIO Solutions',
   email: 'fixiosolutions@gmail.com',
-  pass: 'Fixio2026*',
   role: 'admin'
+  // pass: ELIMINADO — no almacenar credenciales en código JS público
 };
 
 // ─── CONFIGURACIÓN DEL BACKEND EN LA NUBE (SUPABASE) ──────────────────────────
@@ -305,18 +347,12 @@ const FIXIO_BACKEND = {
     const passClean = (password || '').trim();
 
     const isAdminEmail = emailClean === ADMIN_CONFIG.email;
-    const isCorrectPass = passClean === ADMIN_CONFIG.pass || passClean === 'Fixio2026';
 
-    // 1. Direct Master Admin Login Check
-    if (isAdminEmail && isCorrectPass) {
-      return sanitizeUserForStorage({
-        name: ADMIN_CONFIG.name,
-        email: ADMIN_CONFIG.email,
-        role: 'admin'
-      });
-    }
+    // SECURITY FIX C1: Ya no se valida contraseña hardcodeada.
+    // El admin accede SOLO vía Google OAuth (botón "Continuar con Google").
+    // El login con correo/contraseña está disponible para CLIENTES registrados.
 
-    // 2. Cloud Supabase Auth Check
+    // 1. Cloud Supabase Auth (clientes con contraseña registrada)
     if (this.isCloudActive && this.client) {
       try {
         const { data, error } = await this.client.auth.signInWithPassword({ email: emailClean, password: passClean });
@@ -328,15 +364,18 @@ const FIXIO_BACKEND = {
           });
         }
       } catch (e) {
-        if (!isAdminEmail) throw e;
+        if (isAdminEmail) {
+          throw new Error('⚠️ El administrador debe ingresar usando el botón "Continuar con Google".');
+        }
+        throw e;
       }
     }
 
-    // 3. Fallback Local Check
+    // 2. Fallback local para clientes (NO admin)
     if (isAdminEmail) {
-      if (!isCorrectPass) throw new Error('Contraseña de administrador incorrecta.');
-      return sanitizeUserForStorage({ name: ADMIN_CONFIG.name, email: ADMIN_CONFIG.email, role: 'admin' });
+      throw new Error('⚠️ Administrador: usa el botón "Continuar con Google" para acceder.');
     }
+    let user = registeredUsers.find(u => u.email.toLowerCase() === emailClean);
     if (!user) {
       const userName = emailClean.split('@')[0].replace(/[._-]/g, ' ');
       user = sanitizeUserForStorage({
@@ -569,14 +608,18 @@ function renderProducts(items) {
   container.innerHTML = items.map(product => {
     const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
     const isSoldOut = (product.stock !== undefined && product.stock <= 0);
+    // SECURITY FIX M1: Sanitizar campos de producto para prevenir XSS
+    const safeName = sanitizeHTML(product.name || '');
+    const safeDesc = sanitizeHTML(product.desc || '');
+    const safeCategoryName = sanitizeHTML(product.categoryName || '');
     const thumbContent = product.imgUrl
-      ? `<img src="${product.imgUrl}" alt="${product.name}" style="width:100%; height:100%; object-fit:cover; border-radius:12px; ${isSoldOut ? 'filter:grayscale(80%); opacity:0.7;' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${product.svgIcon}</div>`
+      ? `<img src="${sanitizeHTML(product.imgUrl)}" alt="${safeName}" style="width:100%; height:100%; object-fit:cover; border-radius:12px; ${isSoldOut ? 'filter:grayscale(80%); opacity:0.7;' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${product.svgIcon}</div>`
       : product.svgIcon;
 
     return `
     <div class="product-card ${isSoldOut ? 'sold-out' : ''}">
       <div class="product-thumb" style="position:relative; overflow:hidden;">
-        <span class="badge-category">${product.categoryName}</span>
+        <span class="badge-category">${safeCategoryName}</span>
         ${isSoldOut ? `<span style="position:absolute; top:10px; left:10px; background:#1E293B; color:#FFF; font-size:0.7rem; font-weight:800; padding:4px 9px; border-radius:20px; z-index:3; letter-spacing:0.05em;">🚫 AGOTADO</span>` : ''}
         ${discount >= 10 && !isSoldOut ? `<span style="position:absolute; top:10px; right:10px; background:#EF4444; color:#fff; font-size:0.7rem; font-weight:800; padding:3px 7px; border-radius:20px; z-index:2;">-${discount}%</span>` : ''}
         ${thumbContent}
@@ -589,8 +632,8 @@ function renderProducts(items) {
           </div>
           ${!isSoldOut && product.stock !== undefined ? `<span style="font-size:0.75rem; color:${product.stock <= 5 ? '#D97706' : 'var(--success)'}; font-weight:600;">Stock: ${product.stock} disp.</span>` : ''}
         </div>
-        <h3 class="product-title">${product.name}</h3>
-        <p class="product-desc">${product.desc}</p>
+        <h3 class="product-title">${safeName}</h3>
+        <p class="product-desc">${safeDesc}</p>
         <div class="product-footer">
           <div>
             <div class="product-price">$${formatNumber(product.price)} <span style="font-size:0.7rem; font-weight:500;">COP</span></div>
@@ -1390,7 +1433,14 @@ function showToast(message) {
 
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.innerHTML = `<span>✅</span> <span>${message}</span>`;
+  // SECURITY FIX M1: Sanitizar mensaje antes de inyectar en innerHTML
+  const icon = document.createElement('span');
+  icon.textContent = '✅';
+  const txt = document.createElement('span');
+  txt.textContent = message;
+  toast.appendChild(icon);
+  toast.appendChild(document.createTextNode(' '));
+  toast.appendChild(txt);
   container.appendChild(toast);
 
   setTimeout(() => {
@@ -3400,13 +3450,19 @@ function switchAuthTab(tabName) {
 
 async function handleLoginSubmit(event) {
   event.preventDefault();
-  const email = sanitizeHTML(document.getElementById('loginEmail').value.trim().toLowerCase());
+  const email = (document.getElementById('loginEmail').value || '').trim().toLowerCase();
   const pass = document.getElementById('loginPass').value.trim();
 
   try {
+    // SECURITY FIX B3: Verificar rate limit antes de intentar login
+    LOGIN_RATE_LIMIT.check();
+
     const user = await FIXIO_BACKEND.signIn(email, pass);
     currentUser = sanitizeUserForStorage(user);
-    localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+    safeStorage.set('fixio_user', currentUser);
+
+    // Login exitoso: resetear contador de intentos
+    LOGIN_RATE_LIMIT.reset();
 
     renderHeaderAuth();
     closeAuthModal();
@@ -3418,7 +3474,11 @@ async function handleLoginSubmit(event) {
       openAdminModal();
     }
   } catch (err) {
-    showToast(`⚠️ Error al iniciar sesión: ${err.message || 'Credenciales incorrectas'}`);
+    // Registrar intento fallido (a menos que sea error de rate limit propio)
+    if (!err.message.includes('Demasiados intentos')) {
+      LOGIN_RATE_LIMIT.fail();
+    }
+    showToast(`⚠️ ${err.message || 'Credenciales incorrectas'}`);
   }
 }
 

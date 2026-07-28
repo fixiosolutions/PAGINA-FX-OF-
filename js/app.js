@@ -3199,26 +3199,29 @@ function renderHeaderAuth() {
 async function handleSocialLogin(provider) {
   if (provider !== 'google') return;
 
-  // ── Paso 1: Intentar OAuth real de Google vía Supabase ──────────────────
+  showToast('🔄 Abriendo Google Sign-In...');
+
+  // ── OAuth real de Google vía Supabase (ya configurado) ──────────────────
   if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
     try {
       const { data, error } = await FIXIO_BACKEND.client.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin + window.location.pathname,
-          queryParams: { access_type: 'offline', prompt: 'consent' }
+          queryParams: { access_type: 'offline', prompt: 'select_account' }
         }
       });
       if (!error && data && data.url) {
         window.location.href = data.url;
         return;
       }
+      if (error) console.warn('[FIXIO] Error Google OAuth:', error.message);
     } catch (e) {
-      console.warn('[FIXIO] Google OAuth no configurado en Supabase aún:', e.message);
+      console.warn('[FIXIO] Error Google OAuth excepción:', e.message);
     }
   }
 
-  // ── Paso 2: Flujo alternativo — pedir correo de Gmail ──────────────────
+  // ── Fallback si Supabase no responde ───────────────────────────────────
   showGoogleEmailPrompt();
 }
 

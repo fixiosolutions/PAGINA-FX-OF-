@@ -3818,56 +3818,127 @@ function openLegalModal(type = 'privacy') {
   if (type === 'privacy') {
     if (title) title.innerHTML = '🛡️ Política de Tratamiento de Datos Personales (Ley 1581 de 2012)';
     body.innerHTML = `
-      <div style="background:#F0FDFA; padding:14px; border-radius:8px; border:1px solid #99F6E4; margin-bottom:14px; font-size:0.85rem; color:#0F766E;">
-        <strong>Conformidad Ley Estatutaria 1581 de 2012:</strong> FIXIO SOLUTIONS S.A.S. (NIT 901.847.239-1) es el Responsable del Tratamiento de sus datos personales.
+      <div style="background:linear-gradient(135deg, #F0FDFA, #CCFBF1); padding:16px; border-radius:12px; border:1px solid #99F6E4; margin-bottom:18px; color:#0F766E;">
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">📜 Cumplimiento Ley Estatutaria 1581 de 2012 & Decreto 1377 de 2013</div>
+        <div style="font-size:0.85rem; opacity:0.9;">FIXIO SOLUTIONS S.A.S. (NIT 901.847.239-1) garantiza la máxima confidencialidad, seguridad y protección de tus datos personales.</div>
       </div>
-      <h4 style="color:var(--primary-dark); margin-top:12px;">1. Responsable del Tratamiento</h4>
-      <p><strong>FIXIO SOLUTIONS S.A.S.</strong> · NIT: 901.847.239-1 · Domicilio: Cra 18 #78-74 Of 602, Bogotá D.C. · Correo: <a href="mailto:fixiosolutions@gmail.com">fixiosolutions@gmail.com</a> · Tel: +57 311 6860336.</p>
-      
-      <h4 style="color:var(--primary-dark); margin-top:12px;">2. Finalidades de la Recolección</h4>
-      <p>Sus datos personales (nombre, correo, teléfono, dirección) son recolectados exclusivamente para:</p>
-      <ul>
-        <li>Procesamiento, despacho y entrega de sus pedidos.</li>
-        <li>Generación del Código Único de Entrega (🔑) y facturación.</li>
-        <li>Envío de confirmaciones por WhatsApp y correo electrónico.</li>
-        <li>Atención de solicitudes, garantías y servicio al cliente (PQRS).</li>
-      </ul>
 
-      <h4 style="color:var(--primary-dark); margin-top:12px;">3. Derechos del Titular (Derechos ARCO)</h4>
-      <p>Usted tiene derecho a conocer, actualizar, rectificar y solicitar la supresión de sus datos personales en cualquier momento escribiendo a <strong>fixiosolutions@gmail.com</strong>. La solicitud se atenderá en un plazo máximo de 10 días hábiles.</p>
+      <div style="display:grid; gap:16px;">
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">1. Identificación del Responsable del Tratamiento</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            <strong>FIXIO SOLUTIONS S.A.S.</strong> · NIT: 901.847.239-1<br>
+            📍 <strong>Domicilio:</strong> Carrera 18 # 78-74 Oficina 602, Bogotá D.C., Colombia.<br>
+            📧 <strong>Correo Oficial:</strong> <a href="mailto:fixiosolutions@gmail.com" style="color:var(--primary); font-weight:600;">fixiosolutions@gmail.com</a><br>
+            📱 <strong>WhatsApp Atención:</strong> +57 311 6860336
+          </p>
+        </div>
+
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">2. Finalidad de la Recolección de Datos</h4>
+          <p style="margin:0 0 8px; font-size:0.88rem;">Sus datos personales (nombre, teléfono, correo, dirección de entrega) son recolectados exclusivamente para:</p>
+          <ul style="margin:0; padding-left:20px; font-size:0.88rem; line-height:1.6;">
+            <li>Procesamiento, despacho y transporte seguro de sus pedidos en Bogotá y Colombia.</li>
+            <li>Generación del Código Único de Entrega (🔑) y emisión de facturación legal.</li>
+            <li>Notificaciones de estado de pedido por WhatsApp y correo electrónico.</li>
+            <li>Tramitación de garantías, devoluciones y servicio al cliente (PQRS).</li>
+          </ul>
+        </div>
+
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">3. Derechos del Titular (Derechos ARCO)</h4>
+          <p style="margin:0 0 8px; font-size:0.88rem;">De acuerdo con el Artículo 8 de la Ley 1581 de 2012, el titular de los datos tiene derecho a:</p>
+          <ul style="margin:0; padding-left:20px; font-size:0.88rem; line-height:1.6;">
+            <li><strong>Conocer, actualizar y rectificar</strong> sus datos personales ante FIXIO Solutions.</li>
+            <li><strong>Solicitar prueba</strong> de la autorización otorgada para el tratamiento de datos.</li>
+            <li><strong>Revocar la autorización o solicitar la supresión</strong> de sus datos cuando lo considere pertinente.</li>
+          </ul>
+        </div>
+
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">4. Procedimiento para Consultas y Reclamos</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            Puede ejercer sus derechos enviando una solicitud por escrito a <strong>fixiosolutions@gmail.com</strong>. La solicitud se atenderá en un término máximo de <strong>diez (10) días hábiles</strong> contados a partir de la fecha de recepción.
+          </p>
+        </div>
+      </div>
     `;
   } else if (type === 'terms') {
     if (title) title.innerHTML = '⚖️ Términos y Condiciones (Ley 1480 de 2011 & Dec. 587 de 2016)';
     body.innerHTML = `
-      <div style="background:#FEF3C7; padding:14px; border-radius:8px; border:1px solid #FDE68A; margin-bottom:14px; font-size:0.85rem; color:#92400E;">
-        <strong>Estatuto del Consumidor Colombiano:</strong> Al realizar una compra en FIXIO Solutions, el cliente acepta expresamente los presentes Términos y Condiciones.
+      <div style="background:linear-gradient(135deg, #FEF3C7, #FDE68A); padding:16px; border-radius:12px; border:1px solid #FCD34D; margin-bottom:18px; color:#92400E;">
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">⚖️ Estatuto del Consumidor Colombiano (Ley 1480 de 2011)</div>
+        <div style="font-size:0.85rem; opacity:0.9;">Al realizar un pedido en FIXIO Solutions, el cliente acepta de manera expresa los presentes Términos y Condiciones.</div>
       </div>
-      <h4 style="color:var(--primary-dark); margin-top:12px;">1. Derecho de Retracto (Art. 47 Ley 1480 de 2011)</h4>
-      <p>El cliente podrá devolver el producto dentro de los <strong>cinco (5) días hábiles</strong> siguientes a la fecha de entrega. El producto debe devolverse sin uso, en su empaque original y con todos sus accesorios. FIXIO Solutions reembolsará la totalidad del dinero dentro de los 30 días calendario siguientes.</p>
 
-      <h4 style="color:var(--primary-dark); margin-top:12px;">2. Reversión del Pago (Decreto 587 de 2016)</h4>
-      <p>Procede en compras con tarjetas o pasarela electrónica ante fraudes, operaciones no solicitadas, productos no recibidos o defectuosos. La solicitud debe enviarse dentro de los 5 días hábiles a <strong>fixiosolutions@gmail.com</strong>.</p>
+      <div style="display:grid; gap:16px;">
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">1. Precios y Pagos</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            Todos los precios están expresados en <strong>Pesos Colombianos (COP)</strong> e incluyen los impuestos aplicables. Los pagos se procesan de forma 100% segura mediante nuestra pasarela aliada <strong>Wompi (Bancolombia)</strong> o en modalidad Pago Contra Entrega en Bogotá.
+          </p>
+        </div>
 
-      <h4 style="color:var(--primary-dark); margin-top:12px;">3. Garantía Legal de Productos</h4>
-      <p>Todos los productos cuentan con <strong>garantía legal de noventa (90) días</strong> por defectos de fábrica. No cubre mal uso, golpes o humedad.</p>
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">2. Derecho de Retracto (Art. 47 Ley 1480 de 2011)</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            El consumidor podrá hacer uso del Derecho de Retracto dentro de los <strong>cinco (5) días hábiles</strong> siguientes a la entrega del producto. El producto debe ser devuelto en perfectas condiciones, sin muestras de uso, en su empaque original y con todos sus accesorios. FIXIO Solutions reintegrará la totalidad del dinero pagado dentro de los 30 días calendario siguientes.
+          </p>
+        </div>
+
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">3. Reversión del Pago (Decreto 587 de 2016)</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            Procede en compras realizadas mediante tarjeta de crédito, débito o pasarela electrónica cuando el cliente sea objeto de fraude, operación no solicitada, el producto no sea entregado, o el producto entregado no corresponda o sea defectuoso. La solicitud de reversión debe enviarse dentro de los 5 días hábiles a <strong>fixiosolutions@gmail.com</strong>.
+          </p>
+        </div>
+
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">4. Garantía Legal de Productos (Art. 7 Ley 1480 de 2011)</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            Todos los productos comercializados por FIXIO Solutions cuentan con una <strong>garantía legal de noventa (90) días calendario</strong> por defectos de fabricación o mal funcionamiento electrónico. No cubre daños ocasionados por mal uso, caídas, humedad o modificaciones de terceros.
+          </p>
+        </div>
+      </div>
     `;
   } else if (type === 'shipping') {
-    if (title) title.innerHTML = '🚚 Política de Envíos, Tiempos y Devoluciones';
+    if (title) title.innerHTML = '🚚 Política de Envíos, Tiempos y Garantías';
     body.innerHTML = `
-      <div style="background:#EFF6FF; padding:14px; border-radius:8px; border:1px solid #BFDBFE; margin-bottom:14px; font-size:0.85rem; color:#1E40AF;">
-        <strong>Envíos Nacionales Seguros:</strong> FIXIO Solutions entrega sus productos con código único de verificación en Bogotá y todo el territorio colombiano.
+      <div style="background:linear-gradient(135deg, #EFF6FF, #BFDBFE); padding:16px; border-radius:12px; border:1px solid #93C5FD; margin-bottom:18px; color:#1E40AF;">
+        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px;">🚚 Cobertura y Tiempos de Despacho en Colombia</div>
+        <div style="font-size:0.85rem; opacity:0.9;">FIXIO Solutions entrega sus productos con código alfanumérico único de entrega para tu seguridad.</div>
       </div>
-      <h4 style="color:var(--primary-dark); margin-top:12px;">1. Tiempos de Entrega</h4>
-      <ul>
-        <li><strong>Bogotá D.C.:</strong> 1 a 3 días hábiles.</li>
-        <li><strong>Resto del País (Colombia):</strong> 2 a 5 días hábiles a través de transportadoras aliadas.</li>
-      </ul>
 
-      <h4 style="color:var(--primary-dark); margin-top:12px;">2. Beneficio de Envío Gratis</h4>
-      <p>Envío gratis en Bogotá por compras superiores a <strong>$150.000 COP</strong> o mediante cupones habilitados como <code>ENVIOGRATIS</code>.</p>
+      <div style="display:grid; gap:16px;">
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">1. Tiempos Estimados de Entrega</h4>
+          <ul style="margin:0; padding-left:20px; font-size:0.88rem; line-height:1.6;">
+            <li><strong>Bogotá D.C. y área metropolitana:</strong> 1 a 3 días hábiles.</li>
+            <li><strong>Principales ciudades de Colombia:</strong> 2 a 5 días hábiles a través de transportadoras certificadas (Servientrega, Interrapidísimo, Envía).</li>
+          </ul>
+        </div>
 
-      <h4 style="color:var(--primary-dark); margin-top:12px;">3. Código Único de Entrega (🔑)</h4>
-      <p>Cada orden genera un código alfanumérico único para validar la recepción de su paquete con el repartidor o transportadora.</p>
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">2. Tarifas y Envío Gratis</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            El costo del envío en Bogotá es de $8.000 COP y a nivel nacional $14.000 COP. FIXIO otorgará <strong>ENVÍO GRATIS</strong> por compras superiores a <strong>$150.000 COP</strong> o mediante el código promocional <code>ENVIOGRATIS</code>.
+          </p>
+        </div>
+
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">3. Código Único de Entrega (🔑)</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            Para garantizar que el paquete llegue a tus manos, cada orden genera un <strong>Código Único de Entrega</strong>. El repartidor o transportadora solicitará este código al momento de la entrega.
+          </p>
+        </div>
+
+        <div style="background:#FFF; border:1.5px solid var(--border); padding:16px; border-radius:10px;">
+          <h4 style="color:var(--primary-dark); margin:0 0 8px; font-size:1rem;">4. Procedimiento de Cambio o Garantía</h4>
+          <p style="margin:0; font-size:0.88rem; line-height:1.6;">
+            Si tu producto presenta alguna falla o necesitas gestionar un cambio, contáctanos por WhatsApp al <strong>+57 311 6860336</strong> o al correo <strong>fixiosolutions@gmail.com</strong> indicando el número de tu pedido. Te responderemos en menos de 24 horas hábiles.
+          </p>
+        </div>
+      </div>
     `;
   }
 

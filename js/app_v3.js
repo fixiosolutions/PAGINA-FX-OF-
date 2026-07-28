@@ -246,10 +246,10 @@ async function processUploadedFile(file, previewElemId, targetInputId) {
   reader.readAsDataURL(file);
 }
 
-// ─── CONFIGURACIÓN DE CREDENCIALES DE ADMINISTRADOR ─────────────────────────
+// ─── CONFIGURACIÓN DE CREDENCIALES ÚNICAS DE ADMINISTRADOR ──────────────────
 const ADMIN_CONFIG = {
-  name: 'Administrador FIXIO',
-  email: 'admin@fixiosolutions.com',
+  name: 'Administrador FIXIO Solutions',
+  email: 'fixiosolutions@gmail.com',
   pass: 'Fixio2026*',
   role: 'admin'
 };
@@ -281,17 +281,20 @@ const FIXIO_BACKEND = {
   },
 
   async signUp(email, password, userData) {
+    const isTargetAdmin = (email || '').trim().toLowerCase() === ADMIN_CONFIG.email;
+    const finalRole = isTargetAdmin ? 'admin' : (userData.role || 'customer');
+
     if (this.isCloudActive && this.client) {
       const { data, error } = await this.client.auth.signUp({
         email: email,
         password: password,
-        options: { data: userData }
+        options: { data: { ...userData, role: finalRole } }
       });
       if (error) throw error;
-      return sanitizeUserForStorage({ ...userData, email: email });
+      return sanitizeUserForStorage({ ...userData, email: email, role: finalRole });
     }
     // Fallback Local
-    const newUser = sanitizeUserForStorage({ ...userData, email: email });
+    const newUser = sanitizeUserForStorage({ ...userData, email: email, role: finalRole });
     registeredUsers.push(newUser);
     localStorage.setItem('fixio_users', JSON.stringify(registeredUsers.map(u => sanitizeUserForStorage(u))));
     return newUser;
@@ -301,25 +304,19 @@ const FIXIO_BACKEND = {
     const emailClean = (email || '').trim().toLowerCase();
     const passClean = (password || '').trim();
 
-    // Ultra-flexible Admin Credentials Check
-    const isAdminUser = emailClean.includes('admin') || 
-                         emailClean.includes('fixio') || 
-                         emailClean === 'admin';
+    const isAdminEmail = emailClean === ADMIN_CONFIG.email;
+    const isCorrectPass = passClean === ADMIN_CONFIG.pass || passClean === 'Fixio2026';
 
-    const isMasterPassword = passClean === 'Fixio2026*' || 
-                             passClean === 'admin' || 
-                             passClean === 'admin123' || 
-                             passClean === 'Fixio2026' ||
-                             passClean === '123456';
-
-    if (isAdminUser || isMasterPassword) {
+    // 1. Direct Master Admin Login Check
+    if (isAdminEmail && isCorrectPass) {
       return sanitizeUserForStorage({
-        name: 'Administrador FIXIO',
-        email: emailClean.includes('@') ? emailClean : 'admin@fixiosolutions.com',
+        name: ADMIN_CONFIG.name,
+        email: ADMIN_CONFIG.email,
         role: 'admin'
       });
     }
 
+    // 2. Cloud Supabase Auth Check
     if (this.isCloudActive && this.client) {
       try {
         const { data, error } = await this.client.auth.signInWithPassword({ email: emailClean, password: passClean });
@@ -327,16 +324,19 @@ const FIXIO_BACKEND = {
           return sanitizeUserForStorage({
             name: data.user.user_metadata?.name || emailClean.split('@')[0],
             email: data.user.email,
-            role: data.user.user_metadata?.role || (isAdminUser ? 'admin' : 'customer')
+            role: isAdminEmail ? 'admin' : (data.user.user_metadata?.role || 'customer')
           });
         }
       } catch (e) {
-        console.warn('Supabase Auth Notice:', e);
+        if (!isAdminEmail) throw e;
       }
     }
 
-    // Default Customer / Fallback Login
-    let user = registeredUsers.find(u => u.email.toLowerCase() === emailClean);
+    // 3. Fallback Local Check
+    if (isAdminEmail) {
+      if (!isCorrectPass) throw new Error('Contraseña de administrador incorrecta.');
+      return sanitizeUserForStorage({ name: ADMIN_CONFIG.name, email: ADMIN_CONFIG.email, role: 'admin' });
+    }
     if (!user) {
       const userName = emailClean.split('@')[0].replace(/[._-]/g, ' ');
       user = sanitizeUserForStorage({

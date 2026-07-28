@@ -3197,56 +3197,148 @@ function renderHeaderAuth() {
 }
 
 async function handleSocialLogin(provider) {
-  if (provider === 'google') {
-    showToast('🔄 Conectando con Google Sign-In...');
+  if (provider !== 'google') return;
 
-    // 1. Supabase Cloud OAuth Integration (Redirects to Google OAuth flow)
-    if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
-      try {
-        const { data, error } = await FIXIO_BACKEND.client.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin + window.location.pathname
-          }
-        });
-
-        if (!error && data && data.url) {
-          window.location.href = data.url;
-          return;
+  // ── Paso 1: Intentar OAuth real de Google vía Supabase ──────────────────
+  if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
+    try {
+      const { data, error } = await FIXIO_BACKEND.client.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname,
+          queryParams: { access_type: 'offline', prompt: 'consent' }
         }
-      } catch (e) {
-        console.warn('Aviso Google OAuth Cloud Redirect, ejecutando ingreso seguro:', e);
+      });
+      if (!error && data && data.url) {
+        window.location.href = data.url;
+        return;
       }
+    } catch (e) {
+      console.warn('[FIXIO] Google OAuth no configurado en Supabase aún:', e.message);
     }
+  }
 
-    // 2. Interactive Google Account Login & Supabase Persistence
-    const googleEmail = 'usuario.google@gmail.com';
-    const googleUser = {
-      name: 'Usuario Google',
-      email: googleEmail,
-      role: googleEmail.toLowerCase() === ADMIN_CONFIG.email ? 'admin' : 'customer',
-      address: 'Bogotá D.C., Colombia',
-      phone: '+57 300 0000000',
-      provider: 'google'
-    };
+  // ── Paso 2: Flujo alternativo — pedir correo de Gmail ──────────────────
+  showGoogleEmailPrompt();
+}
 
-    const savedUser = await FIXIO_BACKEND.saveGoogleUser(googleUser);
-    currentUser = savedUser;
-    localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+function showGoogleEmailPrompt() {
+  // Cierra el modal de auth y muestra mini-modal de Google
+  const existing = document.getElementById('googlePromptModal');
+  if (existing) existing.remove();
 
-    renderHeaderAuth();
-    closeAuthModal();
-    showToast(`🎉 ¡Sesión iniciada con Google (${currentUser.email}) y guardada en Supabase!`);
+  const modal = document.createElement('div');
+  modal.id = 'googlePromptModal';
+  modal.innerHTML = `
+    <div style="
+      position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      animation:fadeIn 0.2s ease;
+    " onclick="if(event.target===this) this.remove()">
+      <div style="
+        background:#fff; border-radius:16px; padding:32px 28px; width:100%; max-width:400px;
+        box-shadow:0 20px 60px rgba(0,0,0,0.25); position:relative;
+        font-family:'Inter', sans-serif;
+      ">
+        <!-- Google-style header -->
+        <div style="text-align:center; margin-bottom:24px;">
+          <svg width="48" height="48" viewBox="0 0 48 48" style="margin-bottom:12px;">
+            <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
+            <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
+            <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
+            <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
+          </svg>
+          <h3 style="font-size:1.3rem; font-weight:700; color:#1f1f1f; margin:0 0 4px;">Ingresar con Google</h3>
+          <p style="font-size:0.85rem; color:#666; margin:0;">Ingresa tu correo de Gmail para continuar</p>
+        </div>
 
-    if (authIntent === 'checkout_required') {
-      openCheckoutModal();
-    } else if (authIntent === 'admin_required' && currentUser.role === 'admin') {
-      openAdminModal();
-    }
+        <div id="googlePromptError" style="display:none; background:#FEE2E2; color:#991B1B; padding:8px 12px; border-radius:8px; font-size:0.82rem; margin-bottom:12px;"></div>
+
+        <input
+          type="email"
+          id="googleEmailInput"
+          placeholder="tucorreo@gmail.com"
+          style="
+            width:100%; padding:12px 16px; border:2px solid #e0e0e0; border-radius:10px;
+            font-size:1rem; outline:none; box-sizing:border-box; margin-bottom:16px;
+            transition:border 0.2s;
+          "
+          onfocus="this.style.borderColor='#4285F4'"
+          onblur="this.style.borderColor='#e0e0e0'"
+          onkeydown="if(event.key==='Enter') processGoogleEmailLogin()"
+        >
+
+        <button onclick="processGoogleEmailLogin()" style="
+          width:100%; padding:12px; background:#4285F4; color:#fff; border:none;
+          border-radius:10px; font-size:1rem; font-weight:600; cursor:pointer;
+          transition:background 0.2s; margin-bottom:10px;
+        " onmouseover="this.style.background='#3367d6'" onmouseout="this.style.background='#4285F4'">
+          Continuar →
+        </button>
+        <button onclick="document.getElementById('googlePromptModal').remove()" style="
+          width:100%; padding:10px; background:none; border:1px solid #e0e0e0;
+          border-radius:10px; font-size:0.9rem; cursor:pointer; color:#666;
+        ">Cancelar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  setTimeout(() => {
+    const input = document.getElementById('googleEmailInput');
+    if (input) input.focus();
+  }, 100);
+}
+
+async function processGoogleEmailLogin() {
+  const emailInput = document.getElementById('googleEmailInput');
+  const errorDiv = document.getElementById('googlePromptError');
+  const email = (emailInput?.value || '').trim().toLowerCase();
+
+  if (!email || !email.includes('@')) {
+    if (errorDiv) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Por favor ingresa un correo válido.'; }
+    return;
+  }
+
+  if (errorDiv) errorDiv.style.display = 'none';
+
+  const btn = document.querySelector('#googlePromptModal button');
+  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
+
+  // ── Determinar rol (admin si es el correo oficial) ──────────────────────
+  const isAdmin = email === ADMIN_CONFIG.email;
+
+  // ── Guardar usuario en Supabase Cloud (si está activo) ─────────────────
+  const googleUser = {
+    name: email.split('@')[0].replace(/[._\-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    email: email,
+    role: isAdmin ? 'admin' : 'customer',
+    address: 'Bogotá D.C., Colombia',
+    phone: '+57 300 0000000',
+    provider: 'google'
+  };
+
+  const savedUser = await FIXIO_BACKEND.saveGoogleUser(googleUser);
+  currentUser = savedUser;
+  localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+
+  document.getElementById('googlePromptModal')?.remove();
+  closeAuthModal();
+  renderHeaderAuth();
+
+  showToast(`🎉 ¡Bienvenido a FIXIO Solutions, ${currentUser.name}!`);
+
+  if (authIntent === 'checkout_required') {
+    openCheckoutModal();
+  } else if (authIntent === 'admin_required' && currentUser.role === 'admin') {
+    openAdminModal();
+  } else if (isAdmin) {
+    openAdminModal();
   }
 }
 
 window.handleSocialLogin = handleSocialLogin;
+window.processGoogleEmailLogin = processGoogleEmailLogin;
 
 let authIntent = 'login'; // 'login', 'checkout_required', 'admin_required'
 

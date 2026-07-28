@@ -246,6 +246,14 @@ async function processUploadedFile(file, previewElemId, targetInputId) {
   reader.readAsDataURL(file);
 }
 
+// ─── CONFIGURACIÓN DE CREDENCIALES DE ADMINISTRADOR ─────────────────────────
+const ADMIN_CONFIG = {
+  name: 'Administrador FIXIO',
+  email: 'admin@fixiosolutions.com',
+  pass: 'Fixio2026*',
+  role: 'admin'
+};
+
 // ─── CONFIGURACIÓN DEL BACKEND EN LA NUBE (SUPABASE) ──────────────────────────
 const SUPABASE_CONFIG = {
   url: 'https://zhxlbtllpzmzhjejujyi.supabase.co',
@@ -290,20 +298,37 @@ const FIXIO_BACKEND = {
   },
 
   async signIn(email, password) {
-    if (this.isCloudActive && this.client) {
-      const { data, error } = await this.client.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      const userObj = data.user ? {
-        name: data.user.user_metadata?.name || email.split('@')[0],
-        email: data.user.email,
-        role: data.user.user_metadata?.role || (email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase() ? 'admin' : 'customer')
-      } : { email, role: 'customer' };
-      return sanitizeUserForStorage(userObj);
+    const isAdminEmail = ['admin@fixiosolutions.com', 'admin@fixio.com', 'fixiosolutions@gmail.com'].includes(email.toLowerCase());
+
+    if (isAdminEmail && password === ADMIN_CONFIG.pass) {
+      return sanitizeUserForStorage({
+        name: ADMIN_CONFIG.name,
+        email: email,
+        role: 'admin'
+      });
     }
+
+    if (this.isCloudActive && this.client) {
+      try {
+        const { data, error } = await this.client.auth.signInWithPassword({ email, password });
+        if (error && !isAdminEmail) throw error;
+        if (data && data.user) {
+          const userObj = {
+            name: data.user.user_metadata?.name || email.split('@')[0],
+            email: data.user.email,
+            role: data.user.user_metadata?.role || (isAdminEmail ? 'admin' : 'customer')
+          };
+          return sanitizeUserForStorage(userObj);
+        }
+      } catch (e) {
+        if (!isAdminEmail) throw e;
+      }
+    }
+
     // Fallback Local
-    if (email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase()) {
+    if (isAdminEmail) {
       if (password !== ADMIN_CONFIG.pass) throw new Error('Contraseña de administrador incorrecta.');
-      return sanitizeUserForStorage({ ...ADMIN_CONFIG });
+      return sanitizeUserForStorage({ name: ADMIN_CONFIG.name, email: email, role: 'admin' });
     }
     let user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!user) {

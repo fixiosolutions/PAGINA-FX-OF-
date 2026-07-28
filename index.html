@@ -592,16 +592,31 @@
     <!-- Footer Bottom Bar -->
     <div class="footer-bottom">
       <div class="footer-bottom-left">
-        <p>© 2026 <strong>FIXIO SOLUTIONS S.A.S.</strong> — NIT: 901.234.567-8 — Todos los derechos reservados.</p>
+        <p>© 2026 <strong>FIXIO SOLUTIONS S.A.S.</strong> — NIT: 901.847.239-1 — Todos los derechos reservados.</p>
         <p style="font-size:0.75rem; color:rgba(255,255,255,0.45); margin-top:4px;">Cámara de Comercio de Bogotá · Superintendencia de Industria y Comercio</p>
       </div>
       <div class="footer-bottom-links">
-        <a href="#">Términos y Condiciones</a>
-        <a href="#">Política de Privacidad</a>
-        <a href="#">Política de Envíos</a>
+        <a href="javascript:void(0)" onclick="openLegalModal('terms')">Términos y Condiciones</a>
+        <a href="javascript:void(0)" onclick="openLegalModal('privacy')">Tratamiento de Datos & Privacidad</a>
+        <a href="javascript:void(0)" onclick="openLegalModal('shipping')">Política de Envíos & Garantías</a>
       </div>
     </div>
   </footer>
+
+  <!-- LEGAL POLICIES MODAL -->
+  <div class="modal-overlay" id="legalOverlay" onclick="closeLegalModal()"></div>
+  <div class="product-modal" id="legalModal" style="max-width:850px; max-height:85vh; overflow-y:auto; padding:28px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--border); padding-bottom:12px; margin-bottom:18px;">
+      <h3 style="font-size:1.25rem; font-weight:800; color:var(--dark);" id="legalModalTitle">⚖️ Políticas Legales & Términos</h3>
+      <button onclick="closeLegalModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted);">✕</button>
+    </div>
+    <div id="legalModalBody" style="font-size:0.9rem; line-height:1.7; color:var(--dark);">
+      <!-- Rendered dynamically by app.js -->
+    </div>
+    <div style="text-align:right; margin-top:20px; border-top:1px solid var(--border); padding-top:12px;">
+      <button class="btn btn-primary" onclick="closeLegalModal()" style="padding:8px 20px; font-size:0.85rem;">Entendido / Cerrar</button>
+    </div>
+  </div>
 
   <!-- CART DRAWER MODAL -->
   <div class="modal-overlay" id="cartOverlay" onclick="closeCartDrawer()"></div>

@@ -148,39 +148,239 @@ function saveProducts() {
 let cart = JSON.parse(localStorage.getItem('fixio_cart') || '[]');
 let orders = JSON.parse(localStorage.getItem('fixio_orders') || '[]');
 let subscribers = JSON.parse(localStorage.getItem('fixio_subscribers') || '[]');
-let currentUser = JSON.parse(localStorage.getItem('fixio_user') || 'null');
-// ─── CONFIGURACIÓN DE PROVEEDORES OAUTH 2.0 ─────────────────────────────
-// Reemplaza estos valores con tus Client IDs oficiales cuando registres tus aplicaciones:
-const OAUTH_CONFIG = {
-  googleClientId: '1068413284905-mkk9iqhutkfnbmsposmpqunh80fkumj4.apps.googleusercontent.com', // Google Cloud Console
-  microsoftClientId: 'demo-microsoft-client-id',                   // Azure Portal
-  facebookAppId: 'demo-facebook-app-id'                            // Meta for Developers
-};
 
-// ─── CONFIGURACIÓN DE LA CUENTA ADMINISTRADOR ────────────────────────────
-// Para modificar las credenciales del Administrador, edita los valores aquí:
-const ADMIN_CONFIG = {
-  name: 'Administrador FIXIO',
-  email: 'FIXIOSOLUTIONS@GMAIL.COM', // 👈 Modifica aquí el correo de administración
-  pass: 'ZAQ!2wsx:)',        // 👈 Modifica aquí la contraseña de administración
-  role: 'admin',
-  address: 'Cra 18 #78-74 Of 602, Bogotá',
-  phone: '+57 311 6860336'
-};
-
-// Registered Users — with admin pre-seeded
-let registeredUsers = JSON.parse(localStorage.getItem('fixio_users') || '[]');
-const existingAdminIdx = registeredUsers.findIndex(u => u.role === 'admin' || u.email === ADMIN_CONFIG.email);
-if (existingAdminIdx === -1) {
-  registeredUsers.unshift({ ...ADMIN_CONFIG });
-  localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
-} else {
-  // Always update admin credentials to match ADMIN_CONFIG
-  registeredUsers[existingAdminIdx].email = ADMIN_CONFIG.email;
-  registeredUsers[existingAdminIdx].pass = ADMIN_CONFIG.pass;
-  registeredUsers[existingAdminIdx].name = ADMIN_CONFIG.name;
-  localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
+// SECURITY HELPER: Helper to sanitize user objects for localStorage storage (strips passwords & sensitive tokens)
+function sanitizeUserForStorage(user) {
+  if (!user) return null;
+  const clone = { ...user };
+  delete clone.pass;
+  return clone;
 }
+
+// SECURITY HELPER: Sanitize string to prevent XSS attacks
+function sanitizeHTML(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+let currentUser = sanitizeUserForStorage(JSON.parse(localStorage.getItem('fixio_user') || 'null'));
+// Ensure any legacy stored currentUser has no pass property
+if (currentUser) {
+  localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+}
+
+// FILE UPLOAD HELPERS (Data URL / Base64 conversion for Drag & Drop inputs)
+function handleFileSelect(inputElem, previewElemId, targetInputId) {
+  if (!inputElem.files || !inputElem.files[0]) return;
+  const file = inputElem.files[0];
+  processUploadedFile(file, previewElemId, targetInputId);
+}
+
+function handleDropEvent(event, dropzoneElem) {
+  event.preventDefault();
+  dropzoneElem.style.borderColor = 'var(--border)';
+  dropzoneElem.style.background = '#FFF';
+  if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+    const file = event.dataTransfer.files[0];
+    const fileInput = dropzoneElem.querySelector('input[type="file"]');
+    if (fileInput) {
+      const previewId = fileInput.getAttribute('onchange')?.match(/'([^']+)',\s*'([^']+)'/)?.[1];
+      const targetId = fileInput.getAttribute('onchange')?.match(/'([^']+)',\s*'([^']+)'/)?.[2];
+      if (previewId && targetId) processUploadedFile(file, previewId, targetId);
+    }
+  }
+}
+
+async function processUploadedFile(file, previewElemId, targetInputId) {
+  // 1. Try uploading to Supabase Storage Cloud CDN
+  const cloudUrl = await FIXIO_BACKEND.uploadImage(file, 'products');
+
+  if (cloudUrl) {
+    const targetInput = document.getElementById(targetInputId);
+    if (targetInput) targetInput.value = cloudUrl;
+
+    const previewContainer = document.getElementById(previewElemId);
+    if (previewContainer) {
+      if (file.type.startsWith('image/')) {
+        previewContainer.innerHTML = `
+          <img src="${cloudUrl}" style="width:36px; height:36px; object-fit:cover; border-radius:6px; border:1px solid var(--primary);" />
+          <span style="font-size:0.75rem; color:var(--success); font-weight:600;">☁️ En la Nube (Supabase)</span>
+        `;
+      } else {
+        previewContainer.innerHTML = `
+          <span style="font-size:0.75rem; color:var(--success); font-weight:600;">☁️ PDF Nube: ${file.name}</span>
+        `;
+      }
+    }
+    showToast(`☁️ Archivo "${file.name}" guardado en Supabase Storage CDN.`);
+    return;
+  }
+
+  // 2. Fallback to Local Base64 Data URL if bucket is offline
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const dataUrl = e.target.result;
+    const targetInput = document.getElementById(targetInputId);
+    if (targetInput) targetInput.value = dataUrl;
+
+    const previewContainer = document.getElementById(previewElemId);
+    if (previewContainer) {
+      if (file.type.startsWith('image/')) {
+        previewContainer.innerHTML = `
+          <img src="${dataUrl}" style="width:36px; height:36px; object-fit:cover; border-radius:6px; border:1px solid var(--primary);" />
+          <span style="font-size:0.75rem; color:var(--success); font-weight:600;">✓ Carga Local</span>
+        `;
+      } else {
+        previewContainer.innerHTML = `
+          <span style="font-size:0.75rem; color:var(--success); font-weight:600;">📄 PDF cargado: ${file.name}</span>
+        `;
+      }
+    }
+    showToast(`✅ Archivo "${file.name}" cargado exitosamente.`);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── CONFIGURACIÓN DEL BACKEND EN LA NUBE (SUPABASE) ──────────────────────────
+const SUPABASE_CONFIG = {
+  url: 'https://zhxlbtllpzmzhjejujyi.supabase.co',
+  anonKey: 'sb_publishable_ZeSt6i5Sv8vvLmknN9Xx2w_1dFiATdG'
+};
+
+// ─── ADAPTADOR UNIFICADO DE BACKEND (DUAL MODE: CLOUD & LOCAL FALLBACK) ─────
+const FIXIO_BACKEND = {
+  client: null,
+  isCloudActive: false,
+
+  init() {
+    if (SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey && typeof supabase !== 'undefined') {
+      try {
+        this.client = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        this.isCloudActive = true;
+        console.log('⚡ FIXIO Backend Cloud Activo (Supabase Conectado)');
+      } catch (e) {
+        console.warn('⚠️ Error al inicializar Supabase Cloud, usando fallback local:', e);
+        this.isCloudActive = false;
+      }
+    } else {
+      console.log('ℹ️ FIXIO Backend funcionando en Modo Local / Demo Seguro');
+    }
+  },
+
+  async signUp(email, password, userData) {
+    if (this.isCloudActive && this.client) {
+      const { data, error } = await this.client.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: userData }
+      });
+      if (error) throw error;
+      return sanitizeUserForStorage({ ...userData, email: email });
+    }
+    // Fallback Local
+    const newUser = sanitizeUserForStorage({ ...userData, email: email });
+    registeredUsers.push(newUser);
+    localStorage.setItem('fixio_users', JSON.stringify(registeredUsers.map(u => sanitizeUserForStorage(u))));
+    return newUser;
+  },
+
+  async signIn(email, password) {
+    if (this.isCloudActive && this.client) {
+      const { data, error } = await this.client.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      const userObj = data.user ? {
+        name: data.user.user_metadata?.name || email.split('@')[0],
+        email: data.user.email,
+        role: data.user.user_metadata?.role || (email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase() ? 'admin' : 'customer')
+      } : { email, role: 'customer' };
+      return sanitizeUserForStorage(userObj);
+    }
+    // Fallback Local
+    if (email.toLowerCase() === ADMIN_CONFIG.email.toLowerCase()) {
+      if (password !== ADMIN_CONFIG.pass) throw new Error('Contraseña de administrador incorrecta.');
+      return sanitizeUserForStorage({ ...ADMIN_CONFIG });
+    }
+    let user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (!user) {
+      const userName = email.split('@')[0].replace(/[._-]/g, ' ');
+      user = sanitizeUserForStorage({
+        name: userName.charAt(0).toUpperCase() + userName.slice(1) || 'Cliente FIXIO',
+        email: email,
+        role: 'customer',
+        address: 'Bogotá, Colombia',
+        phone: '300 000 0000'
+      });
+      registeredUsers.push(user);
+      localStorage.setItem('fixio_users', JSON.stringify(registeredUsers.map(u => sanitizeUserForStorage(u))));
+    }
+    return user;
+  },
+
+  async saveOrder(orderData) {
+    if (this.isCloudActive && this.client) {
+      try {
+        const { data, error } = await this.client.from('orders').insert([orderData]);
+        if (error) console.warn('Aviso al guardar en nube:', error);
+      } catch (e) {
+        console.warn('Error cloud order save:', e);
+      }
+    }
+    orders.unshift(orderData);
+    localStorage.setItem('fixio_orders', JSON.stringify(orders));
+    return orderData;
+  },
+
+  async getOrders(userEmail) {
+    if (!userEmail || typeof userEmail !== 'string') return [];
+    if (this.isCloudActive && this.client) {
+      try {
+        const { data, error } = await this.client.from('orders').select('*').eq('customerEmail', userEmail);
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn('Error cloud get orders:', e);
+      }
+    }
+    return orders.filter(o => o.customerEmail?.toLowerCase() === userEmail.toLowerCase() || o.customer?.toLowerCase() === userEmail.toLowerCase());
+  },
+
+  async uploadImage(file, bucketName = 'products') {
+    if (this.isCloudActive && this.client) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const filePath = `uploads/${fileName}`;
+
+        const { data, error } = await this.client.storage
+          .from(bucketName)
+          .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+        if (error) {
+          console.warn('Aviso Supabase Storage, usando fallback local Base64:', error);
+          return null;
+        } else if (data) {
+          const { data: publicUrlData } = this.client.storage
+            .from(bucketName)
+            .getPublicUrl(filePath);
+
+          if (publicUrlData && publicUrlData.publicUrl) {
+            return publicUrlData.publicUrl;
+          }
+        }
+      } catch (e) {
+        console.warn('Error al subir imagen a Supabase Storage:', e);
+      }
+    }
+    return null;
+  }
+};
+
+// Inicializar Backend
+FIXIO_BACKEND.init();
 
 // Blog Posts State
 let blogPosts = JSON.parse(localStorage.getItem('fixio_blog') || '[]');
@@ -455,6 +655,10 @@ function addToCart(productId) {
 
   const existing = cart.find(item => item.id === productId);
   if (existing) {
+    if (product.stock !== undefined && existing.qty >= product.stock) {
+      showToast(`⚠️ Ya agregaste todas las unidades disponibles (${product.stock}) de "${product.name}".`);
+      return;
+    }
     existing.qty += 1;
   } else {
     cart.push({ ...product, qty: 1 });
@@ -627,6 +831,10 @@ function renderCartDrawer() {
 }
 
 function applyCoupon() {
+  if (cart.length === 0) {
+    showToast('⚠️ Agrega productos al carrito antes de aplicar un cupón.');
+    return;
+  }
   const code = document.getElementById('couponInput')?.value.trim().toUpperCase();
   if (!code) return;
 
@@ -650,6 +858,13 @@ function removeCoupon() {
 function changeQty(id, delta) {
   const item = cart.find(i => i.id === id);
   if (!item) return;
+
+  const prod = PRODUCTS.find(p => p.id === id);
+  if (delta > 0 && prod && prod.stock !== undefined && item.qty >= prod.stock) {
+    showToast(`⚠️ Stock máximo alcanzado para "${prod.name}" (${prod.stock} disp.).`);
+    return;
+  }
+
   item.qty += delta;
   if (item.qty <= 0) {
     cart = cart.filter(i => i.id !== id);
@@ -933,7 +1148,12 @@ function generateDeliveryCode() {
   return code;
 }
 
-function completeOrderRegistration(newOrder, discountAmount, finalShipping, finalTotal) {
+async function completeOrderRegistration(newOrder, discountAmount, finalShipping, finalTotal) {
+  if (!newOrder || !newOrder.items || newOrder.items.length === 0) {
+    showToast('⚠️ No se pueden procesar órdenes con el carrito vacío.');
+    return;
+  }
+
   // Deduct purchased quantities from stock
   newOrder.items.forEach(item => {
     const prod = PRODUCTS.find(p => p.id === item.id);
@@ -944,8 +1164,8 @@ function completeOrderRegistration(newOrder, discountAmount, finalShipping, fina
   saveProducts();
   renderProducts(PRODUCTS);
 
-  orders.unshift(newOrder);
-  localStorage.setItem('fixio_orders', JSON.stringify(orders));
+  // Persist Order via FIXIO_BACKEND Cloud/Local Adapter
+  await FIXIO_BACKEND.saveOrder(newOrder);
 
   // Build rich order summary
   const orderSummary = document.getElementById('orderSummaryDetails');
@@ -1009,6 +1229,11 @@ function completeOrderRegistration(newOrder, discountAmount, finalShipping, fina
         <div style="display:flex; justify-content:space-between; padding:8px 0 0; font-size:1rem; font-weight:800; color:var(--dark); border-top:2px solid var(--border); margin-top:4px;">
           <span>TOTAL PAGADO</span>
           <span style="color:var(--primary-dark);">$${formatNumber(finalTotal)} COP</span>
+        </div>
+        <div style="text-align:center; margin-top:12px;">
+          <button class="btn btn-outline" onclick="downloadOrderInvoicePDF('${newOrder.id}')" style="padding:6px 14px; font-size:0.8rem; border-color:var(--primary); color:var(--primary-dark); font-weight:600;">
+            📄 Descargar Factura / Comprobante PDF
+          </button>
         </div>
       </div>
     `;
@@ -1659,6 +1884,256 @@ function adminDeleteBlogPost(postId) {
   showToast('Artículo eliminado del blog.');
 }
 
+// ─── MÓDULO 2: GENERADOR DE FACTURAS Y COMPROBANTES PDF ─────────────────────
+function downloadOrderInvoicePDF(orderId) {
+  let order = orders.find(o => o.id === orderId);
+  if (!order) {
+    const stored = JSON.parse(localStorage.getItem('fixio_orders') || '[]');
+    order = stored.find(o => o.id === orderId);
+  }
+  if (!order) {
+    showToast('⚠️ No se encontró el pedido solicitado.');
+    return;
+  }
+
+  const printWin = window.open('', '_blank', 'width=850,height=900');
+  if (!printWin) {
+    showToast('⚠️ Desbloquea las ventanas emergentes para descargar la factura PDF.');
+    return;
+  }
+
+  const itemsRowsHTML = (order.items || []).map(i => `
+    <tr>
+      <td style="padding:10px; border-bottom:1px solid #E2E8F0;">${sanitizeHTML(i.name)}</td>
+      <td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:center;">${i.qty}</td>
+      <td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:right;">$${formatNumber(i.price)} COP</td>
+      <td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:right; font-weight:bold;">$${formatNumber(i.price * i.qty)} COP</td>
+    </tr>
+  `).join('');
+
+  const invoiceHTML = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>Factura y Comprobante de Compra - ${order.id} | FIXIO Solutions</title>
+      <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #1E293B; margin: 0; padding: 40px; background: #FFF; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0D9488; padding-bottom: 20px; margin-bottom: 25px; }
+        .logo-title { font-size: 24px; font-weight: 800; color: #0F172A; margin: 0; }
+        .logo-subtitle { font-size: 13px; color: #0D9488; font-weight: 600; margin-top: 4px; }
+        .invoice-badge { text-align: right; }
+        .invoice-title { font-size: 18px; font-weight: 800; color: #0D9488; text-transform: uppercase; }
+        .code-box { background: #FEF3C7; border: 2px dashed #F59E0B; padding: 12px 20px; border-radius: 8px; text-align: center; margin: 20px 0; }
+        .code-title { font-size: 11px; font-weight: 800; color: #92400E; text-transform: uppercase; letter-spacing: 0.05em; }
+        .code-val { font-size: 28px; font-weight: 900; color: #B45309; font-family: monospace; letter-spacing: 0.2em; }
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .info-box { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+        .info-label { color: #64748B; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; }
+        th { background: #F1F5F9; color: #334155; padding: 10px; text-align: left; font-size: 12px; font-weight: 700; border-bottom: 2px solid #CBD5E1; }
+        .totals-table { width: 320px; margin-left: auto; font-size: 14px; }
+        .totals-table td { padding: 6px 10px; }
+        .grand-total { font-size: 18px; font-weight: 800; color: #0D9488; border-top: 2px solid #0D9488; }
+        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #94A3B8; border-top: 1px solid #E2E8F0; padding-top: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <div class="logo-title">FIXIO SOLUTIONS S.A.S.</div>
+          <div class="logo-subtitle">NIT: 901.847.239-1 | Soluciones Prácticas Que Hacen Tu Vida Más Fácil</div>
+          <div style="font-size:12px; color:#64748B; margin-top:4px;">Bogotá D.C., Colombia | Tel: +57 311 6860336</div>
+        </div>
+        <div class="invoice-badge">
+          <div class="invoice-title">COMPROBANTE DE COMPRA</div>
+          <div style="font-weight:bold; font-size:15px; margin-top:4px;">${order.id}</div>
+          <div style="font-size:12px; color:#64748B; margin-top:2px;">Fecha: ${order.date}</div>
+        </div>
+      </div>
+
+      <div class="code-box">
+        <div class="code-title">🔑 CÓDIGO ÚNICO DE ENTREGA (CONFIRMACIÓN DE PAQUETE)</div>
+        <div class="code-val">${order.deliveryCode || 'N/A'}</div>
+      </div>
+
+      <div class="grid-info">
+        <div class="info-box">
+          <div class="info-label">DATOS DEL CLIENTE</div>
+          <div><strong>Nombre:</strong> ${sanitizeHTML(order.customer)}</div>
+          <div><strong>Correo:</strong> ${sanitizeHTML(order.email)}</div>
+          <div><strong>Teléfono / WA:</strong> ${sanitizeHTML(order.phone)}</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">DETALLES DE DESPACHO Y PAGO</div>
+          <div><strong>Dirección:</strong> ${sanitizeHTML(order.address)}</div>
+          <div><strong>Método de Pago:</strong> ${sanitizeHTML(order.payment)}</div>
+          <div><strong>Estado:</strong> ${sanitizeHTML(order.status)}</div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th style="text-align:center;">Cant.</th>
+            <th style="text-align:right;">Precio Unitario</th>
+            <th style="text-align:right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsRowsHTML}
+        </tbody>
+      </table>
+
+      <table class="totals-table">
+        <tr>
+          <td>Subtotal:</td>
+          <td style="text-align:right; font-weight:600;">$${formatNumber(order.total)} COP</td>
+        </tr>
+        <tr>
+          <td>Envío:</td>
+          <td style="text-align:right; font-weight:600; color:#10B981;">GRATIS</td>
+        </tr>
+        <tr class="grand-total">
+          <td style="padding-top:10px;">TOTAL PAGADO:</td>
+          <td style="text-align:right; padding-top:10px;">$${formatNumber(order.total)} COP</td>
+        </tr>
+      </table>
+
+      <div class="footer">
+        <p>¡Gracias por tu compra en FIXIO Solutions! Para soporte de garantía o dudas sobre tu envío, contáctanos a soporte@fixiosolutions.com o al WhatsApp +57 311 6860336.</p>
+        <p>Documento digital emitido por FIXIO Solutions S.A.S. — Bogotá, Colombia.</p>
+      </div>
+
+      <script>
+        window.onload = function() {
+          window.print();
+        };
+      </script>
+    </body>
+    </html>
+  `;
+
+  printWin.document.write(invoiceHTML);
+  printWin.document.close();
+}
+
+// ─── MÓDULO 3: EXPORTACIÓN DE DATOS A EXCEL / CSV & MÉTRICAS KPI ─────────────
+function exportOrdersToCSV() {
+  const currentOrders = JSON.parse(localStorage.getItem('fixio_orders') || '[]').length > 0
+    ? JSON.parse(localStorage.getItem('fixio_orders') || '[]')
+    : orders;
+
+  if (currentOrders.length === 0) {
+    showToast('⚠️ No hay pedidos para exportar.');
+    return;
+  }
+
+  let csvContent = "\uFEFF"; // UTF-8 BOM for Excel
+  csvContent += "ID Pedido,Fecha,Codigo Entrega,Cliente,Correo,Telefono,Direccion,Metodo Pago,Total COP,Estado\n";
+
+  currentOrders.forEach(o => {
+    const row = [
+      `"${o.id || ''}"`,
+      `"${o.date || ''}"`,
+      `"${o.deliveryCode || ''}"`,
+      `"${(o.customer || '').replace(/"/g, '""')}"`,
+      `"${(o.email || '').replace(/"/g, '""')}"`,
+      `"${(o.phone || '').replace(/"/g, '""')}"`,
+      `"${(o.address || '').replace(/"/g, '""')}"`,
+      `"${(o.payment || '').replace(/"/g, '""')}"`,
+      `"${o.total || 0}"`,
+      `"${o.status || 'Pendiente'}"`
+    ];
+    csvContent += row.join(",") + "\n";
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `ventas_fixio_solutions_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('📥 Reporte de Ventas descargado en formato Excel (.csv)');
+}
+
+function exportCustomersToCSV() {
+  const allUsers = [...registeredUsers];
+  subscribers.forEach(sub => {
+    if (!allUsers.some(u => u.email.toLowerCase() === sub.email.toLowerCase())) {
+      allUsers.push({ name: sub.name || 'Suscriptor', email: sub.email, role: 'Suscriptor Newsletter', address: 'N/A', phone: 'N/A' });
+    }
+  });
+
+  if (allUsers.length === 0) {
+    showToast('⚠️ No hay clientes para exportar.');
+    return;
+  }
+
+  let csvContent = "\uFEFF"; // UTF-8 BOM for Excel
+  csvContent += "Nombre,Correo,Rol / Tipo,Telefono,Direccion\n";
+
+  allUsers.forEach(u => {
+    const row = [
+      `"${(u.name || '').replace(/"/g, '""')}"`,
+      `"${(u.email || '').replace(/"/g, '""')}"`,
+      `"${u.role || 'Cliente'}"`,
+      `"${(u.phone || 'N/A').replace(/"/g, '""')}"`,
+      `"${(u.address || 'N/A').replace(/"/g, '""')}"`
+    ];
+    csvContent += row.join(",") + "\n";
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `clientes_fixio_solutions_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('📥 Directorio de Clientes descargado en formato Excel (.csv)');
+}
+
+function renderAdminMetricsHTML() {
+  const currentOrders = JSON.parse(localStorage.getItem('fixio_orders') || '[]').length > 0
+    ? JSON.parse(localStorage.getItem('fixio_orders') || '[]')
+    : orders;
+
+  const totalRevenue = currentOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const totalOrdersCount = currentOrders.length;
+  const lowStockCount = PRODUCTS.filter(p => (p.stock === undefined ? 10 : p.stock) < 5).length;
+  const totalCustomersCount = registeredUsers.length + subscribers.length;
+
+  return `
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:24px;">
+      <div style="background:linear-gradient(135deg, #0F766E 0%, #0D9488 100%); color:#FFF; padding:18px; border-radius:var(--radius-md); box-shadow:0 4px 12px rgba(13,148,136,0.15);">
+        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; opacity:0.85;">💰 Ventas Totales</div>
+        <div style="font-size:1.4rem; font-weight:800; margin-top:4px;">$${formatNumber(totalRevenue)} COP</div>
+        <div style="font-size:0.75rem; opacity:0.75; margin-top:2px;">Facturación acumulada</div>
+      </div>
+      <div style="background:linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%); color:#FFF; padding:18px; border-radius:var(--radius-md); box-shadow:0 4px 12px rgba(59,130,246,0.15);">
+        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; opacity:0.85;">📦 Total Pedidos</div>
+        <div style="font-size:1.4rem; font-weight:800; margin-top:4px;">${totalOrdersCount} órdenes</div>
+        <div style="font-size:0.75rem; opacity:0.75; margin-top:2px;">Procesadas en tienda</div>
+      </div>
+      <div style="background:${lowStockCount > 0 ? 'linear-gradient(135deg, #991B1B 0%, #EF4444 100%)' : 'linear-gradient(135deg, #065F46 0%, #10B981 100%)'}; color:#FFF; padding:18px; border-radius:var(--radius-md); box-shadow:0 4px 12px rgba(239,68,68,0.15);">
+        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; opacity:0.85;">⚠️ Stock Bajo (&lt; 5)</div>
+        <div style="font-size:1.4rem; font-weight:800; margin-top:4px;">${lowStockCount} productos</div>
+        <div style="font-size:0.75rem; opacity:0.75; margin-top:2px;">${lowStockCount > 0 ? 'Requiere reabastecimiento' : 'Inventario óptimo'}</div>
+      </div>
+      <div style="background:linear-gradient(135deg, #D97706 0%, #F59E0B 100%); color:#FFF; padding:18px; border-radius:var(--radius-md); box-shadow:0 4px 12px rgba(245,158,11,0.15);">
+        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; opacity:0.85;">👥 Base de Clientes</div>
+        <div style="font-size:1.4rem; font-weight:800; margin-top:4px;">${totalCustomersCount} usuarios</div>
+        <div style="font-size:0.75rem; opacity:0.75; margin-top:2px;">Registrados y suscriptores</div>
+      </div>
+    </div>
+  `;
+}
+
 
 function switchAdminTab(tabName) {
   document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1915,9 +2390,20 @@ function switchAdminTab(tabName) {
       </table>
     `;
   } else if (tabName === 'orders') {
+    const currentOrders = JSON.parse(localStorage.getItem('fixio_orders') || '[]').length > 0
+      ? JSON.parse(localStorage.getItem('fixio_orders') || '[]')
+      : orders;
+
     container.innerHTML = `
-      <h4>🚚 Gestión de Pedidos de Clientes (${orders.length})</h4>
-      ${orders.length === 0 ? `
+      ${renderAdminMetricsHTML()}
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+        <h4>🚚 Gestión de Pedidos de Clientes (${currentOrders.length})</h4>
+        <button class="btn btn-primary" onclick="exportOrdersToCSV()" style="padding:8px 16px; font-size:0.85rem; display:flex; align-items:center; gap:6px; background:var(--primary-dark);">
+          📥 Exportar Ventas a Excel (.csv)
+        </button>
+      </div>
+
+      ${currentOrders.length === 0 ? `
         <p style="color:var(--text-muted); margin-top:20px; text-align:center; padding:30px;">No hay pedidos registrados aún. ¡Realiza una compra en la tienda para verla aquí!</p>
       ` : `
         <table class="admin-table">
@@ -1930,16 +2416,17 @@ function switchAdminTab(tabName) {
               <th>Dirección / Tel</th>
               <th>Total</th>
               <th>Estado</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>
-            ${orders.map(o => `
+            ${currentOrders.map(o => `
               <tr>
                 <td><strong>${o.id}</strong></td>
                 <td style="font-size:0.8rem;">${o.date}</td>
                 <td><span style="font-weight:800; font-family:monospace; background:#FEF3C7; color:#B45309; padding:3px 8px; border-radius:4px; border:1px solid #F59E0B; font-size:0.85rem;">🔑 ${o.deliveryCode || 'N/A'}</span></td>
-                <td>${o.customer}</td>
-                <td style="font-size:0.8rem;">${o.address}<br>📱 ${o.phone}</td>
+                <td>${sanitizeHTML(o.customer)}<br><span style="font-size:0.75rem; color:var(--text-muted);">${sanitizeHTML(o.email)}</span></td>
+                <td style="font-size:0.8rem;">${sanitizeHTML(o.address)}<br>📱 ${sanitizeHTML(o.phone)}</td>
                 <td><strong>$${formatNumber(o.total)} COP</strong></td>
                 <td>
                   <select onchange="adminUpdateOrderStatus('${o.id}', this.value)" class="form-control" style="padding:4px 8px; font-size:0.8rem; width:auto;">
@@ -1949,6 +2436,11 @@ function switchAdminTab(tabName) {
                     <option value="Entregado" ${o.status==='Entregado'?'selected':''}>✅ Entregado</option>
                   </select>
                 </td>
+                <td>
+                  <button class="btn btn-outline" onclick="downloadOrderInvoicePDF('${o.id}')" style="padding:4px 10px; font-size:0.75rem; border-color:var(--primary); color:var(--primary-dark); font-weight:600;" title="Descargar Factura PDF">
+                    📄 Factura PDF
+                  </button>
+                </td>
               </tr>
             `).join('')}
           </tbody>
@@ -1956,28 +2448,40 @@ function switchAdminTab(tabName) {
       `}
     `;
   } else if (tabName === 'customers') {
+    const allUsers = [...registeredUsers];
+    subscribers.forEach(sub => {
+      if (!allUsers.some(u => u.email.toLowerCase() === sub.email.toLowerCase())) {
+        allUsers.push({ name: sub.name || 'Suscriptor Newsletter', email: sub.email, role: 'Suscriptor Newsletter', address: 'N/A', phone: 'N/A' });
+      }
+    });
+
     container.innerHTML = `
-      <h4>👥 Registro de Clientes & Suscriptores</h4>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">Bitácora de usuarios y compradores de FIXIO SOLUTIONS SAS.</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h4 style="margin:0;">👥 Registro de Clientes &amp; Suscriptores (${allUsers.length})</h4>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin:4px 0 0;">Bitácora de usuarios y compradores de FIXIO SOLUTIONS SAS.</p>
+        </div>
+        <button class="btn btn-primary" onclick="exportCustomersToCSV()" style="padding:8px 16px; font-size:0.85rem; display:flex; align-items:center; gap:6px; background:var(--primary-dark);">
+          📥 Exportar Clientes a Excel (.csv)
+        </button>
+      </div>
+
       <table class="admin-table">
         <thead>
           <tr>
             <th>Nombre / Email</th>
-            <th>Tipo</th>
-            <th>Fecha Registro</th>
+            <th>Tipo / Rol</th>
+            <th>Teléfono / Dirección</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td><strong>Maritza Rodríguez</strong><br><span style="font-size:0.8rem; color:var(--text-muted);">maritza.rodriguez@gmail.com</span></td>
-            <td><span class="status-badge shipped">Cliente Comprador</span></td>
-            <td>18/07/2026</td>
-          </tr>
-          <tr>
-            <td><strong>Camilo Restrepo</strong><br><span style="font-size:0.8rem; color:var(--text-muted);">camilo.restrepo@outlook.com</span></td>
-            <td><span class="status-badge processing">Suscriptor Newsletter</span></td>
-            <td>18/07/2026</td>
-          </tr>
+          ${allUsers.map(u => `
+            <tr>
+              <td><strong>${sanitizeHTML(u.name)}</strong><br><span style="font-size:0.8rem; color:var(--text-muted);">${sanitizeHTML(u.email)}</span></td>
+              <td><span class="status-badge ${u.role === 'admin' ? 'shipped' : 'processing'}">${sanitizeHTML(u.role || 'Cliente')}</span></td>
+              <td style="font-size:0.8rem;">📱 ${sanitizeHTML(u.phone || 'N/A')}<br>📍 ${sanitizeHTML(u.address || 'N/A')}</td>
+            </tr>
+          `).join('')}
         </tbody>
       </table>
     `;
@@ -2107,8 +2611,18 @@ function switchAdminTab(tabName) {
             </div>
           </div>
           <div style="margin-bottom:14px;">
-            <label style="font-size:0.8rem; font-weight:600;">Ruta / URL de la Imagen (ej: MATERIAL/img-fx001.png)</label>
-            <input type="text" id="editSlideImage" class="form-control" required>
+            <label style="font-size:0.8rem; font-weight:600;">Ruta / URL de la Imagen o Subir Archivo</label>
+            <input type="text" id="editSlideImage" class="form-control" placeholder="MATERIAL/banner_mascotas.png" required style="margin-bottom:8px;">
+            <div class="upload-dropzone" onclick="document.getElementById('editSlideImgFile').click()" 
+                 ondragover="event.preventDefault(); this.style.borderColor='var(--primary)';"
+                 ondragleave="this.style.borderColor='var(--border)';"
+                 ondrop="handleDropEvent(event, this)"
+                 style="border: 2px dashed var(--border); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; background: #FFF;">
+              <span style="font-size: 1.1rem;">🖼️</span>
+              <span style="font-size: 0.78rem; color: var(--text-muted); margin-left:6px;">Haz clic o arrastra una imagen de banner</span>
+              <input type="file" id="editSlideImgFile" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'editSlideImgPreview', 'editSlideImage')">
+            </div>
+            <div id="editSlideImgPreview" style="margin-top:6px; display:flex; align-items:center; gap:6px;"></div>
           </div>
           <div style="display:flex; gap:10px;">
             <button type="submit" class="btn btn-primary" style="padding:8px 18px; font-size:0.85rem;">💾 Guardar Cambios</button>
@@ -2131,7 +2645,19 @@ function switchAdminTab(tabName) {
             <input type="text" id="newSlidePriceOld" placeholder="Precio Anterior (ej: $320.000 COP)" class="form-control">
             <input type="text" id="newSlideProductId" placeholder="ID Producto (ej: FX-001)" class="form-control" required>
           </div>
-          <input type="text" id="newSlideImage" placeholder="Ruta de Imagen (ej: MATERIAL/img-fx001.png)" class="form-control" required style="margin-bottom:14px;">
+          <div style="margin-bottom:14px;">
+            <input type="text" id="newSlideImage" placeholder="Ruta o URL de la Imagen (ej: MATERIAL/banner_mascotas.png)" class="form-control" required style="margin-bottom:8px;">
+            <div class="upload-dropzone" onclick="document.getElementById('newSlideImgFile').click()" 
+                 ondragover="event.preventDefault(); this.style.borderColor='var(--primary)';"
+                 ondragleave="this.style.borderColor='var(--border)';"
+                 ondrop="handleDropEvent(event, this)"
+                 style="border: 2px dashed var(--border); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; background: #FFF;">
+              <span style="font-size: 1.1rem;">🖼️</span>
+              <span style="font-size: 0.78rem; color: var(--text-muted); margin-left:6px;">Haz clic o arrastra la imagen del nuevo banner</span>
+              <input type="file" id="newSlideImgFile" accept="image/*" style="display:none;" onchange="handleFileSelect(this, 'newSlideImgPreview', 'newSlideImage')">
+            </div>
+            <div id="newSlideImgPreview" style="margin-top:6px; display:flex; align-items:center; gap:6px;"></div>
+          </div>
           <div style="display:flex; gap:10px;">
             <button type="submit" class="btn btn-accent" style="padding:8px 16px; font-size:0.85rem;">🚀 Publicar Banner</button>
             <button type="button" class="btn btn-outline" onclick="document.getElementById('createSlideFormContainer').style.display='none'" style="padding:8px 16px; font-size:0.85rem;">Cancelar</button>
@@ -2463,11 +2989,9 @@ function adminUpdateOrderStatus(orderId, newStatus) {
 }
 
 // ─── MY ORDERS — Customer Order History & Tracking ───────────────────────
-function openMyOrdersModal() {
+async function openMyOrdersModal() {
   if (!currentUser) { openAuthModal('login'); return; }
-  // Always read fresh data from localStorage so the admin's latest status updates are visible
-  orders = JSON.parse(localStorage.getItem('fixio_orders') || '[]');
-  renderMyOrders();
+  await renderMyOrders();
   document.getElementById('myOrdersOverlay')?.classList.add('active');
   document.getElementById('myOrdersModal')?.classList.add('active');
 }
@@ -2477,14 +3001,15 @@ function closeMyOrdersModal() {
   document.getElementById('myOrdersModal')?.classList.remove('active');
 }
 
-function renderMyOrders() {
+async function renderMyOrders() {
   const container = document.getElementById('myOrdersContent');
   if (!container || !currentUser) return;
 
-  // Filter orders that belong to the logged-in customer (match by email)
-  const myOrders = orders.filter(o =>
-    o.email && currentUser.email &&
-    o.email.toLowerCase() === currentUser.email.toLowerCase()
+  // Read orders from Cloud / Local backend adapter
+  const userOrdersList = await FIXIO_BACKEND.getOrders(currentUser.email);
+  const myOrders = userOrdersList.filter(o =>
+    (o.email && currentUser.email && o.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+    (o.customerEmail && currentUser.email && o.customerEmail.toLowerCase() === currentUser.email.toLowerCase())
   );
 
   // Status configuration
@@ -2552,11 +3077,13 @@ function renderMyOrders() {
           <div class="order-status-steps">${stepsHTML}</div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:0.85rem; color:var(--text-muted);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:0.85rem; color:var(--text-muted); margin-top:8px;">
           <span>💰 Total pagado: <strong style="color:var(--dark); font-size:0.9rem;">$${formatNumber(order.total)} COP</strong></span>
-          <span>🏠 ${order.address}</span>
+          <button class="btn btn-outline" onclick="downloadOrderInvoicePDF('${order.id}')" style="padding:4px 10px; font-size:0.75rem; border-color:var(--primary); color:var(--primary-dark); font-weight:600;" title="Descargar Factura en PDF">
+            📄 Descargar Factura PDF
+          </button>
         </div>
-        ${itemsHTML ? `<div class="my-order-items">${itemsHTML}</div>` : ''}
+        ${itemsHTML ? `<div class="my-order-items" style="margin-top:8px;">${itemsHTML}</div>` : ''}
       </div>`;
   }).join('');
 
@@ -2668,86 +3195,63 @@ function switchAuthTab(tabName) {
   }
 }
 
-function handleLoginSubmit(event) {
+async function handleLoginSubmit(event) {
   event.preventDefault();
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const email = sanitizeHTML(document.getElementById('loginEmail').value.trim().toLowerCase());
   const pass = document.getElementById('loginPass').value.trim();
 
-  // Search existing registered account
-  let user = registeredUsers.find(u => u.email.toLowerCase() === email);
+  try {
+    const user = await FIXIO_BACKEND.signIn(email, pass);
+    currentUser = sanitizeUserForStorage(user);
+    localStorage.setItem('fixio_user', JSON.stringify(currentUser));
 
-  if (user) {
-    if (user.pass && user.pass !== pass) {
-      showToast('⚠️ Contraseña incorrecta para este correo. Intenta de nuevo.');
-      return;
+    renderHeaderAuth();
+    closeAuthModal();
+    showToast(`🎉 ¡Bienvenido a FIXIO Solutions, ${currentUser.name}!`);
+
+    if (authIntent === 'checkout_required') {
+      openCheckoutModal();
+    } else if (authIntent === 'admin_required' && currentUser.role === 'admin') {
+      openAdminModal();
     }
-  } else {
-    // New email user: create seamless customer account instantly
-    const userName = email.split('@')[0].replace(/[._-]/g, ' ');
-    const formattedName = userName.charAt(0).toUpperCase() + userName.slice(1);
-
-    user = {
-      name: formattedName || 'Cliente FIXIO',
-      email: email,
-      pass: pass,
-      role: 'customer',
-      address: 'Bogotá, Colombia',
-      phone: '300 000 0000'
-    };
-    registeredUsers.push(user);
-    localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
-  }
-
-  currentUser = user;
-  localStorage.setItem('fixio_user', JSON.stringify(currentUser));
-
-  renderHeaderAuth();
-  closeAuthModal();
-  showToast(`🎉 ¡Bienvenido a FIXIO Solutions, ${currentUser.name}!`);
-
-  if (authIntent === 'checkout_required') {
-    openCheckoutModal();
-  } else if (authIntent === 'admin_required' && currentUser.role === 'admin') {
-    openAdminModal();
+  } catch (err) {
+    showToast(`⚠️ Error al iniciar sesión: ${err.message || 'Credenciales incorrectas'}`);
   }
 }
 
-function handleRegisterSubmit(event) {
+async function handleRegisterSubmit(event) {
   event.preventDefault();
-  const name = document.getElementById('regName').value.trim();
-  const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const name = sanitizeHTML(document.getElementById('regName').value.trim());
+  const email = sanitizeHTML(document.getElementById('regEmail').value.trim().toLowerCase());
   const pass = document.getElementById('regPass').value.trim();
-  const address = document.getElementById('regAddress').value.trim();
-  const phone = document.getElementById('regPhone').value.trim();
+  const address = sanitizeHTML(document.getElementById('regAddress').value.trim());
+  const phone = sanitizeHTML(document.getElementById('regPhone').value.trim());
 
-  const existing = registeredUsers.find(u => u.email.toLowerCase() === email);
-  if (existing) {
-    showToast('⚠️ Este correo electrónico ya está registrado. Inicia sesión.');
-    switchAuthTab('login');
+  if (!email || !pass || pass.length < 6) {
+    showToast('⚠️ La contraseña debe tener al menos 6 caracteres.');
     return;
   }
 
-  const newUser = {
-    name: name,
-    email: email,
-    pass: pass,
-    role: 'customer',
-    address: address,
-    phone: phone
-  };
+  try {
+    const newUser = await FIXIO_BACKEND.signUp(email, pass, {
+      name: name,
+      role: 'customer',
+      address: address,
+      phone: phone
+    });
 
-  registeredUsers.push(newUser);
-  localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
+    currentUser = sanitizeUserForStorage(newUser);
+    localStorage.setItem('fixio_user', JSON.stringify(currentUser));
 
-  currentUser = newUser;
-  localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+    renderHeaderAuth();
+    closeAuthModal();
+    showToast(`¡Registro exitoso! Bienvenido a FIXIO Solutions, ${name}.`);
 
-  renderHeaderAuth();
-  closeAuthModal();
-  showToast(`¡Registro exitoso! Bienvenido a FIXIO Solutions, ${name}.`);
-
-  if (authIntent === 'checkout_required') {
-    openCheckoutModal();
+    if (authIntent === 'checkout_required') {
+      openCheckoutModal();
+    }
+  } catch (err) {
+    showToast(`⚠️ Error en el registro: ${err.message || 'No se pudo crear la cuenta'}`);
   }
 }
 
@@ -2791,13 +3295,23 @@ function handleSocialLogin(provider) {
           }
         }
       });
-      google.accounts.id.prompt();
+      google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.warn('Google One Tap not displayed, falling back to manual prompt.');
+          showManualSocialLoginFallback(providerName, provider);
+        }
+      });
+      return;
     } catch(err) {
       console.warn('Google SDK init notice:', err);
     }
   }
 
-  // 2. Interactive Email Prompt (allows entering real personal email instantly)
+  // Fallback for other providers or if Google SDK is not loaded
+  showManualSocialLoginFallback(providerName, provider);
+}
+
+function showManualSocialLoginFallback(providerName, provider) {
   const userEmail = prompt(
     `🌐 Iniciar sesión con ${providerName}:\n\nIngresa tu correo electrónico para vincular tu cuenta de ${providerName}:`,
     currentUser ? currentUser.email : `usuario@${provider === 'microsoft' ? 'outlook' : provider}.com`
@@ -2824,20 +3338,19 @@ function completeSocialAuth(name, email, provider) {
   let user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
 
   if (!user) {
-    user = {
-      name: name,
-      email: email,
-      pass: null,
+    user = sanitizeUserForStorage({
+      name: sanitizeHTML(name),
+      email: sanitizeHTML(email),
       role: 'customer',
       address: 'Bogotá, Colombia',
       phone: '310 000 0000',
       provider: provider
-    };
+    });
     registeredUsers.push(user);
-    localStorage.setItem('fixio_users', JSON.stringify(registeredUsers));
+    localStorage.setItem('fixio_users', JSON.stringify(registeredUsers.map(u => sanitizeUserForStorage(u))));
   }
 
-  currentUser = user;
+  currentUser = sanitizeUserForStorage(user);
   localStorage.setItem('fixio_user', JSON.stringify(currentUser));
 
   renderHeaderAuth();
@@ -2855,17 +3368,27 @@ if (heroSlides.length === 0) {
   heroSlides = [
     {
       id: "SLIDE-001",
-      tag: "🔥 PRODUCTO ESTRELLA",
-      title: "Alimentador Inteligente IMIPAW 3L Wi-Fi",
-      desc: "Control por App móvil, porciones programables, doble alimentación USB y baterías de respaldo.",
+      tag: "🔥 BAZAR INTELIGENTE & MASCOTAS",
+      title: "Alimentador & Bebedero Automático IMIPAW 3L Wi-Fi",
+      desc: "Control por App móvil, filtrado continuo y doble fuente de energía para el cuidado de tus mascotas.",
       price: "$250.000 COP",
       priceOld: "$320.000 COP",
-      image: "MATERIAL/img-fx001.png",
+      image: "MATERIAL/banner_mascotas.png",
       productId: "FX-001"
     },
     {
       id: "SLIDE-002",
-      tag: "💧 SALUD Y MASCOTAS",
+      tag: "💻 ERGONOMÍA & TELETRABAJO",
+      title: "Combo Ergonómico Soporte Laptop + Lámpara Sensor",
+      desc: "Disipación térmica activa en 6 alturas e iluminación LED inteligente para tu oficina en casa.",
+      price: "$130.000 COP",
+      priceOld: "$180.000 COP",
+      image: "MATERIAL/banner_oficina.png",
+      productId: "FX-003"
+    },
+    {
+      id: "SLIDE-003",
+      tag: "💧 SALUD Y HOGAR",
       title: "Dispensador de Agua Automático con Filtro Triple",
       desc: "Filtración cuádruple continua y bomba ultrasilenciosa para agua 100% fresca todo el día.",
       price: "$95.000 COP",
@@ -2874,18 +3397,8 @@ if (heroSlides.length === 0) {
       productId: "FX-002"
     },
     {
-      id: "SLIDE-003",
-      tag: "💻 ERGONOMÍA & OFICINA",
-      title: "Soporte Ergonómico Plegable para Laptop",
-      desc: "Ajustable en 6 alturas con disipación térmica activa. Ideal para postura en teletrabajo.",
-      price: "$85.000 COP",
-      priceOld: "$115.000 COP",
-      image: "MATERIAL/img-fx003.png",
-      productId: "FX-003"
-    },
-    {
       id: "SLIDE-004",
-      tag: "💡 ILUMINACIÓN HOGAR",
+      tag: "💡 ILUMINACIÓN INTELIGENTE",
       title: "Lámpara LED Recargable con Sensor de Movimiento",
       desc: "Encendido automático infrarrojo sin cables para gabinetes, armarios y pasillos.",
       price: "$48.000 COP",

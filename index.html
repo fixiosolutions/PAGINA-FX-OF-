@@ -3,13 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- SECURITY: Content Security Policy (CSP) & Protection Headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data: blob:; connect-src 'self' https: wss:;">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>FIXIO Solutions | Productos Prácticos Que Hacen Tu Vida Más Fácil</title>
   <meta name="description" content="Descubre productos tecnológicos prácticos, útiles y fáciles de usar para el hogar, mascotas y oficina en Bogotá y Colombia. Soluciones que arreglan tu día.">
   <link rel="stylesheet" href="css/styles.css">
-  <!-- EMAILJS, WOMPI PAYMENT GATEWAY & GOOGLE OAUTH SDKs -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script type="text/javascript" src="https://checkout.wompi.co/widget.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- EMAILJS, WOMPI PAYMENT GATEWAY, SUPABASE & GOOGLE OAUTH SDKs -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="https://checkout.wompi.co/widget.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -909,6 +915,6 @@
   </div>
 
 
-  <script src="js/app_v3.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

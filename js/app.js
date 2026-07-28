@@ -3200,7 +3200,7 @@ async function handleSocialLogin(provider) {
   if (provider === 'google') {
     showToast('🔄 Conectando con Google Sign-In...');
 
-    // 1. Supabase Cloud OAuth Integration
+    // 1. Supabase Cloud OAuth Integration (Redirects to Google OAuth flow)
     if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
       try {
         const { data, error } = await FIXIO_BACKEND.client.auth.signInWithOAuth({
@@ -3209,7 +3209,11 @@ async function handleSocialLogin(provider) {
             redirectTo: window.location.origin + window.location.pathname
           }
         });
-        if (!error && data) return;
+
+        if (!error && data && data.url) {
+          window.location.href = data.url;
+          return;
+        }
       } catch (e) {
         console.warn('Aviso Google OAuth Cloud Redirect, ejecutando ingreso seguro:', e);
       }
@@ -3241,6 +3245,8 @@ async function handleSocialLogin(provider) {
     }
   }
 }
+
+window.handleSocialLogin = handleSocialLogin;
 
 let authIntent = 'login'; // 'login', 'checkout_required', 'admin_required'
 

@@ -3199,29 +3199,27 @@ function renderHeaderAuth() {
 async function handleSocialLogin(provider) {
   if (provider !== 'google') return;
 
-  showToast('🔄 Abriendo Google Sign-In...');
+  showToast('🔄 Conectando con Google...');
 
-  // ── OAuth real de Google vía Supabase (ya configurado) ──────────────────
   if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
     try {
       const { data, error } = await FIXIO_BACKEND.client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + window.location.pathname,
-          queryParams: { access_type: 'offline', prompt: 'select_account' }
+          redirectTo: 'https://pagina-fx-of.vercel.app/'
         }
       });
       if (!error && data && data.url) {
         window.location.href = data.url;
         return;
       }
-      if (error) console.warn('[FIXIO] Error Google OAuth:', error.message);
+      if (error) console.warn('[FIXIO] Google OAuth error:', error.message);
     } catch (e) {
-      console.warn('[FIXIO] Error Google OAuth excepción:', e.message);
+      console.warn('[FIXIO] Google OAuth excepción:', e.message);
     }
   }
 
-  // ── Fallback si Supabase no responde ───────────────────────────────────
+  // Fallback: mini-modal estilo Google
   showGoogleEmailPrompt();
 }
 

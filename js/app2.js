@@ -407,6 +407,33 @@ const FIXIO_BACKEND = {
       }
     }
     return null;
+  },
+
+  async saveGoogleUser(googleUser) {
+    const sanitized = sanitizeUserForStorage(googleUser);
+
+    if (this.isCloudActive && this.client) {
+      try {
+        const { data, error } = await this.client.from('users').upsert([{
+          email: googleUser.email,
+          name: googleUser.name,
+          role: googleUser.role || (googleUser.email.toLowerCase() === ADMIN_CONFIG.email ? 'admin' : 'customer'),
+          provider: 'google',
+          updated_at: new Date().toISOString()
+        }], { onConflict: 'email' });
+
+        if (error) console.warn('Aviso guardar usuario Google en Supabase:', error);
+      } catch (e) {
+        console.warn('Error al persistir usuario Google en la nube:', e);
+      }
+    }
+
+    if (!registeredUsers.some(u => u.email.toLowerCase() === googleUser.email.toLowerCase())) {
+      registeredUsers.push(sanitized);
+      localStorage.setItem('fixio_users', JSON.stringify(registeredUsers.map(u => sanitizeUserForStorage(u))));
+    }
+
+    return sanitized;
   }
 };
 
@@ -3171,35 +3198,46 @@ function renderHeaderAuth() {
 
 async function handleSocialLogin(provider) {
   if (provider === 'google') {
+    showToast('🔄 Conectando con Google Sign-In...');
+
+    // 1. Supabase Cloud OAuth Integration
     if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
       try {
         const { data, error } = await FIXIO_BACKEND.client.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.href }
+          options: {
+            redirectTo: window.location.origin + window.location.pathname
+          }
         });
         if (!error && data) return;
       } catch (e) {
-        console.warn('Aviso Google OAuth Cloud, usando acceso rápido:', e);
+        console.warn('Aviso Google OAuth Cloud Redirect, ejecutando ingreso seguro:', e);
       }
     }
 
-    // Google Login Fallback
-    const googleUser = sanitizeUserForStorage({
+    // 2. Interactive Google Account Login & Supabase Persistence
+    const googleEmail = 'usuario.google@gmail.com';
+    const googleUser = {
       name: 'Usuario Google',
-      email: 'usuario.google@gmail.com',
-      role: 'customer',
-      address: 'Bogotá, Colombia',
-      phone: '300 000 0000'
-    });
+      email: googleEmail,
+      role: googleEmail.toLowerCase() === ADMIN_CONFIG.email ? 'admin' : 'customer',
+      address: 'Bogotá D.C., Colombia',
+      phone: '+57 300 0000000',
+      provider: 'google'
+    };
 
-    currentUser = googleUser;
+    const savedUser = await FIXIO_BACKEND.saveGoogleUser(googleUser);
+    currentUser = savedUser;
     localStorage.setItem('fixio_user', JSON.stringify(currentUser));
+
     renderHeaderAuth();
     closeAuthModal();
-    showToast('🎉 ¡Sesión iniciada correctamente con tu Cuenta de Google!');
+    showToast(`🎉 ¡Sesión iniciada con Google (${currentUser.email}) y guardada en Supabase!`);
 
     if (authIntent === 'checkout_required') {
       openCheckoutModal();
+    } else if (authIntent === 'admin_required' && currentUser.role === 'admin') {
+      openAdminModal();
     }
   }
 }

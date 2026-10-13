@@ -3737,7 +3737,7 @@ async function handleSocialLogin(provider) {
       const { data, error } = await FIXIO_BACKEND.client.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://pagina-fx-of.vercel.app/'
+          redirectTo: window.location.origin + '/' // vuelve al dominio desde el que se inició sesión (debe estar en Redirect URLs de Supabase)
         }
       });
       if (!error && data && data.url) {

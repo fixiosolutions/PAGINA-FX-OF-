@@ -2,7 +2,7 @@
    FIXIO SOLUTIONS - DESIGN SYSTEM & STYLESHEET
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+/* Fuentes (Outfit + Plus Jakarta Sans) se cargan desde index.html con preconnect */
 
 :root {
   /* Color Palette - FIXIO Premium Harmonized Scheme */
@@ -2481,7 +2481,7 @@ button, input, select, textarea {
 .main-header {
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 150; /* sobre el contenido, pero debajo de overlays (200), carrito (210) y modales (220) */
   background: var(--surface) !important;
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
@@ -2785,3 +2785,76 @@ button, input, select, textarea {
   background: var(--primary);
 }
 
+
+/* ==========================================================================
+   MENÚ MÓVIL (hamburguesa) + ACCESIBILIDAD
+   ========================================================================== */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  color: var(--dark);
+  cursor: pointer;
+  order: 3;
+}
+
+@media (max-width: 768px) {
+  .nav-container { position: relative; flex-wrap: nowrap; }
+  .nav-toggle { display: inline-flex; flex-shrink: 0; }
+  .nav-links.is-open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 8px 16px 16px;
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    z-index: 99;
+  }
+  .nav-links.is-open li { list-style: none; }
+  .nav-links.is-open a {
+    display: block;
+    padding: 14px 4px;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-links.is-open li:last-child a { border-bottom: none; }
+  .nav-links.is-open a::after { display: none; }
+}
+
+/* Foco visible para navegación con teclado */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #F97316;
+  outline-offset: 2px;
+}
+
+/* Respeta usuarios que prefieren menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* CTAs del hero apilados en celular */
+@media (max-width: 576px) {
+  .hero-cta { flex-direction: column; align-items: stretch; }
+  .hero-cta .btn { width: 100%; justify-content: center; text-align: center; }
+}

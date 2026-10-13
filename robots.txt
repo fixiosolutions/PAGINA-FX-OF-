@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /MATERIAL/*.pdf
+
+Sitemap: https://pagina-fx-of.vercel.app/sitemap.xml

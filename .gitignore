@@ -24,3 +24,6 @@ Guia_Panel_Administrador.md
 # Sensitive documents and configuration
 *.docx
 *.json
+
+# Excepciones: configuración pública de despliegue
+!vercel.json

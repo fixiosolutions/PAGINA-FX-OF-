@@ -136,25 +136,41 @@ const safeStorage = {
   }
 };
 
-// Persistent state with localStorage (usando safeStorage)
-let PRODUCTS = safeStorage.get('fixio_products');
-if (!PRODUCTS) {
-  PRODUCTS = DEFAULT_PRODUCTS;
+// Persistent state: localStorage actúa como caché; Supabase es la fuente de verdad
+// Se carga desde localStorage para renderizado inmediato mientras la nube responde
+let PRODUCTS = safeStorage.get('fixio_products') || DEFAULT_PRODUCTS;
+
+// Asegura que todos los productos tengan campo stock
+PRODUCTS.forEach(p => {
+  if (p.stock === undefined) {
+    const match = DEFAULT_PRODUCTS.find(dp => dp.id === p.id);
+    p.stock = match ? match.stock : 10;
+  }
+});
+safeStorage.set('fixio_products', PRODUCTS);
+
+// saveProducts: persiste en localStorage Y sincroniza a Supabase en nube
+function saveProducts(changedProducts = PRODUCTS) {
   safeStorage.set('fixio_products', PRODUCTS);
-} else {
-  let updated = false;
-  PRODUCTS.forEach(p => {
-    if (p.stock === undefined) {
-      const match = DEFAULT_PRODUCTS.find(dp => dp.id === p.id);
-      p.stock = match ? match.stock : 10;
-      updated = true;
-    }
-  });
-  if (updated) safeStorage.set('fixio_products', PRODUCTS);
+  // Sync async a Supabase — no bloquea el UI
+  if (FIXIO_BACKEND && FIXIO_BACKEND.isCloudActive) {
+    changedProducts.forEach(p => {
+      FIXIO_BACKEND.saveProduct(p).catch(e =>
+        console.warn('[FIXIO] Error sync producto a Supabase:', e)
+      );
+    });
+  }
 }
 
-function saveProducts() {
-  safeStorage.set('fixio_products', PRODUCTS);
+// Carga productos frescos desde Supabase y re-renderiza si hay diferencias
+async function loadProductsFromCloud() {
+  const cloudProducts = await FIXIO_BACKEND.getProducts();
+  if (cloudProducts && cloudProducts.length > 0) {
+    PRODUCTS = cloudProducts;
+    safeStorage.set('fixio_products', PRODUCTS);
+    if (typeof renderProducts === 'function') renderProducts(PRODUCTS);
+    console.log(`✅ ${cloudProducts.length} productos cargados desde Supabase`);
+  }
 }
 
 // Cart & Orders & Auth State Management
@@ -173,6 +189,102 @@ function sanitizeUserForStorage(user) {
 }
 
 // SECURITY HELPER: Sanitizar strings para prevenir XSS
+// ─── ANALÍTICA (GA4) ───────────────────────────────────────────────────────
+// Pega tu ID de medición de GA4 (formato G-XXXXXXXXXX) para activar la medición.
+// Mientras esté vacío, los eventos solo se acumulan en window.dataLayer (útil para GTM).
+const ANALYTICS_CONFIG = {
+  ga4MeasurementId: ''
+};
+
+window.dataLayer = window.dataLayer || [];
+function gtag() { window.dataLayer.push(arguments); }
+
+(function initAnalytics() {
+  const id = ANALYTICS_CONFIG.ga4MeasurementId;
+  if (!id || !/^G-[A-Z0-9]+$/.test(id)) return;
+  const tag = document.createElement('script');
+  tag.async = true;
+  tag.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  document.head.appendChild(tag);
+  gtag('js', new Date());
+  gtag('config', id);
+})();
+
+/**
+ * Registra un evento de negocio (GA4 recomendado: view_item, add_to_cart,
+ * begin_checkout, purchase, generate_lead, sign_up...). Nunca rompe la UI.
+ */
+function trackEvent(name, params = {}) {
+  try {
+    gtag('event', name, params);
+  } catch (e) {
+    console.warn('[FIXIO] trackEvent:', e);
+  }
+}
+
+// Convierte un producto del catálogo al formato "item" de GA4
+function toAnalyticsItem(p, qty = 1) {
+  return {
+    item_id: p.id,
+    item_name: p.name,
+    item_category: p.categoryName || p.category || '',
+    price: p.price,
+    quantity: qty
+  };
+}
+
+// ─── EMAILJS ──────────────────────────────────────────────────────────────
+// Llave pública de EmailJS (Account → General → Public Key). Sin ella, emailjs.send() falla
+// y NO llegan los correos de pedido al administrador ni los comprobantes al cliente.
+const EMAILJS_PUBLIC_KEY = '';
+
+function isEmailJsReady() {
+  return typeof emailjs !== 'undefined' && !!EMAILJS_PUBLIC_KEY;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (isEmailJsReady()) {
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  } else {
+    console.warn('[FIXIO] EmailJS sin llave pública: configura EMAILJS_PUBLIC_KEY en js/app.js para enviar correos.');
+  }
+});
+
+// ─── IMÁGENES OPTIMIZADAS ─────────────────────────────────────────────────
+// Imágenes del proyecto que tienen versión .webp (≈20-75 KB frente a 400-900 KB del PNG).
+const WEBP_VERSIONS = new Set([
+  'MATERIAL/img-fx001.png', 'MATERIAL/img-fx002.png', 'MATERIAL/img-fx003.png',
+  'MATERIAL/img-fx004.png', 'MATERIAL/img-fx005.png', 'MATERIAL/img-fx006.png',
+  'MATERIAL/banner_mascotas.png', 'MATERIAL/banner_oficina.png'
+]);
+
+function optimizedImageUrl(url) {
+  return WEBP_VERSIONS.has(url) ? url.replace(/\.png$/, '.webp') : url;
+}
+
+// ─── MENÚ MÓVIL ───────────────────────────────────────────────────────────
+function toggleMobileNav(forceOpen) {
+  const nav = document.getElementById('mainNav');
+  const btn = document.getElementById('navToggle');
+  if (!nav || !btn) return;
+  const open = typeof forceOpen === 'boolean' ? forceOpen : !nav.classList.contains('is-open');
+  nav.classList.toggle('is-open', open);
+  btn.setAttribute('aria-expanded', String(open));
+  btn.setAttribute('aria-label', open ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+}
+
+document.addEventListener('click', (e) => {
+  const nav = document.getElementById('mainNav');
+  if (!nav || !nav.classList.contains('is-open')) return;
+  if (e.target.closest('#mainNav a') || (!e.target.closest('#mainNav') && !e.target.closest('#navToggle'))) {
+    toggleMobileNav(false);
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') toggleMobileNav(false);
+});
+
 function sanitizeHTML(str) {
   if (!str) return '';
   return String(str)
@@ -521,6 +633,149 @@ const FIXIO_BACKEND = {
     }
 
     return sanitized;
+  },
+
+  // ─── PRODUCTOS: CRUD EN SUPABASE ──────────────────────────────────────────
+
+  /**
+   * Obtiene todos los productos activos desde Supabase.
+   * Devuelve null si no hay conexión o hay error (usar DEFAULT_PRODUCTS como fallback).
+   */
+  async getProducts() {
+    if (!this.isCloudActive || !this.client) return null;
+    try {
+      const { data, error } = await this.client
+        .from('products')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) { console.warn('[FIXIO] Error al cargar productos desde Supabase:', error); return null; }
+
+      // Mapear columnas snake_case de Supabase → camelCase del frontend
+      return (data || []).map(r => ({
+        id:            r.id,
+        name:          r.name,
+        category:      r.category,
+        categoryName:  r.category_name,
+        price:         r.price,
+        oldPrice:      r.old_price,
+        stock:         r.stock,
+        badge:         r.badge,
+        desc:          r.description,
+        benefits:      Array.isArray(r.benefits) ? r.benefits : [],
+        reviewsList:   Array.isArray(r.reviews_list) ? r.reviews_list : [],
+        imgUrl:        r.img_url,
+        imgUrl2:       r.img_url2,
+        imgUrl3:       r.img_url3,
+        manualPdfUrl:  r.manual_pdf_url,
+        svgIcon:       r.svg_icon,
+        rating:        r.rating,
+        reviews:       r.reviews_count,
+        active:        r.active
+      }));
+    } catch (e) {
+      console.warn('[FIXIO] Error getProducts:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Crea o actualiza un producto en Supabase (upsert por id).
+   */
+  async saveProduct(product) {
+    if (!this.isCloudActive || !this.client) return;
+    try {
+      const row = {
+        id:            product.id,
+        name:          product.name,
+        category:      product.category,
+        category_name: product.categoryName || product.category,
+        price:         product.price,
+        old_price:     product.oldPrice || null, // sin precio "antes" ficticio (Ley 1480)
+        stock:         product.stock !== undefined ? product.stock : 0,
+        badge:         product.badge || '',
+        description:   product.desc || '',
+        benefits:      JSON.stringify(product.benefits || []),
+        reviews_list:  JSON.stringify(product.reviewsList || []),
+        img_url:       product.imgUrl || '',
+        img_url2:      product.imgUrl2 || '',
+        img_url3:      product.imgUrl3 || '',
+        manual_pdf_url:product.manualPdfUrl || '',
+        svg_icon:      product.svgIcon || '',
+        rating:        product.rating || 5.0,
+        reviews_count: product.reviews || 0,
+        active:        product.active !== false
+      };
+      const { error } = await this.client
+        .from('products')
+        .upsert([row], { onConflict: 'id' });
+      if (error) console.warn('[FIXIO] Error saveProduct:', error);
+    } catch (e) {
+      console.warn('[FIXIO] Error saveProduct catch:', e);
+    }
+  },
+
+  /**
+   * Actualiza solo el campo stock de un producto (optimizado, sin enviar todo el objeto).
+   */
+  async updateProductStock(productId, newStock) {
+    if (!this.isCloudActive || !this.client) return;
+    try {
+      const { error } = await this.client
+        .from('products')
+        .update({ stock: Math.max(0, newStock) })
+        .eq('id', productId);
+      if (error) console.warn('[FIXIO] Error updateProductStock:', error);
+    } catch (e) {
+      console.warn('[FIXIO] Error updateProductStock catch:', e);
+    }
+  },
+
+  /**
+   * Soft-delete: marca el producto como inactivo en lugar de borrarlo.
+   */
+  async deleteProduct(productId) {
+    if (!this.isCloudActive || !this.client) return;
+    try {
+      const { error } = await this.client
+        .from('products')
+        .update({ active: false })
+        .eq('id', productId);
+      if (error) console.warn('[FIXIO] Error deleteProduct:', error);
+    } catch (e) {
+      console.warn('[FIXIO] Error deleteProduct catch:', e);
+    }
+  },
+
+  /**
+   * Seed inicial: sube todos los DEFAULT_PRODUCTS a Supabase.
+   * Llamar UNA SOLA VEZ desde el panel de admin.
+   */
+  async seedProductsToSupabase() {
+    if (!this.isCloudActive || !this.client) {
+      showToast('⚠️ Supabase no está conectado. Verifica la configuración.');
+      return;
+    }
+    showToast('⏳ Subiendo catálogo a Supabase...');
+    let ok = 0, fail = 0;
+    for (const p of PRODUCTS) {
+      try {
+        await this.saveProduct(p);
+        ok++;
+      } catch (e) {
+        fail++;
+        console.warn('[FIXIO Seed] Error con', p.id, e);
+      }
+    }
+    const msg = fail === 0
+      ? `✅ ${ok} productos subidos a Supabase exitosamente. ¡Base de datos lista!`
+      : `⚠️ ${ok} exitosos, ${fail} fallidos. Revisa la consola.`;
+    showToast(msg, 5000);
+    // Marcar como semilla completada para no mostrar el botón de nuevo
+    safeStorage.set('fixio_seed_done', true);
+    // Refrescar la vista del tab de productos
+    if (typeof switchAdminTab === 'function') switchAdminTab('products');
   }
 };
 
@@ -561,12 +816,18 @@ if (blogPosts.length === 0) {
 
 // DOM Elements Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. Renderizado inmediato desde caché (localStorage o DEFAULT_PRODUCTS)
   renderProducts(PRODUCTS);
   renderBlogPosts();
   updateCartCount();
   renderHeaderAuth();
   setupEventListeners();
   initScrollReveal();
+
+  // 2. Carga async desde Supabase en segundo plano (actualiza el catálogo si hay diferencias)
+  loadProductsFromCloud().catch(e =>
+    console.warn('[FIXIO] No se pudo cargar catálogo desde Supabase, usando local:', e)
+  );
 });
 
 // ─── Scroll Reveal with IntersectionObserver ───────────────────────────────
@@ -604,6 +865,15 @@ function handleNewsletterSubscription(event) {
     localStorage.setItem('fixio_subscribers', JSON.stringify(subscribers));
   }
 
+  // Guardar en la nube (tabla newsletter_subscribers). Antes solo quedaba en el navegador del visitante.
+  if (FIXIO_BACKEND.isCloudActive && FIXIO_BACKEND.client) {
+    FIXIO_BACKEND.client
+      .from('newsletter_subscribers')
+      .insert([{ email: email.toLowerCase(), source: 'Newsletter Banner' }])
+      .then(({ error }) => { if (error && error.code !== '23505') console.warn('[FIXIO] Newsletter Supabase:', error); });
+  }
+  trackEvent('generate_lead', { lead_type: 'newsletter' });
+
   // Show success state
   const form = document.getElementById('newsletterForm');
   const success = document.getElementById('newsletterSuccess');
@@ -622,7 +892,27 @@ function handleContactForm(event) {
 
   if (!name || !email || !message) return;
 
-  // Simulate sending (store locally for admin reference)
+  // Entrega real del mensaje: EmailJS si está configurado y, siempre, WhatsApp prellenado.
+  // (Antes solo se guardaba en el localStorage del visitante y nunca llegaba a FIXIO.)
+  if (isEmailJsReady()) {
+    emailjs.send(NOTIFICATION_CONFIG.emailjsServiceId, NOTIFICATION_CONFIG.emailjsContactTemplateId, {
+      to_email: NOTIFICATION_CONFIG.companyEmail,
+      from_name: name,
+      reply_to: email,
+      subject,
+      message
+    }).catch(err => console.warn('[FIXIO] EmailJS contacto:', err));
+  }
+  const waText = encodeURIComponent(`Hola FIXIO 👋\n*Asunto:* ${subject}\n*Nombre:* ${name}\n*Correo:* ${email}\n\n${message}`);
+  const waUrl = `https://wa.me/${NOTIFICATION_CONFIG.companyPhone}?text=${waText}`;
+  window.open(waUrl, '_blank', 'noopener');
+  const waFallback = document.getElementById('contactWaFallback');
+  if (waFallback) {
+    waFallback.innerHTML = `Si WhatsApp no se abrió, <a href="${waUrl}" target="_blank" rel="noopener" style="color:inherit; font-weight:700; text-decoration:underline;">toca aquí para enviar tu mensaje</a>.`;
+  }
+  trackEvent('generate_lead', { lead_type: 'contact_form', subject });
+
+  // Copia local de referencia
   const messages = JSON.parse(localStorage.getItem('fixio_messages') || '[]');
   messages.unshift({
     id: 'MSG-' + Date.now(),
@@ -653,6 +943,8 @@ function renderProducts(items) {
     return;
   }
 
+  if (items === PRODUCTS) updateProductSchema(PRODUCTS);
+
   container.innerHTML = items.map(product => {
     const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
     const isSoldOut = (product.stock !== undefined && product.stock <= 0);
@@ -661,7 +953,7 @@ function renderProducts(items) {
     const safeDesc = sanitizeHTML(product.desc || '');
     const safeCategoryName = sanitizeHTML(product.categoryName || '');
     const thumbContent = product.imgUrl
-      ? `<img src="${sanitizeHTML(product.imgUrl)}" alt="${safeName}" style="width:100%; height:100%; object-fit:cover; border-radius:12px; ${isSoldOut ? 'filter:grayscale(80%); opacity:0.7;' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${product.svgIcon}</div>`
+      ? `<img src="${sanitizeHTML(optimizedImageUrl(product.imgUrl))}" alt="${safeName}" loading="lazy" decoding="async" width="400" height="400" style="width:100%; height:100%; object-fit:cover; border-radius:12px; ${isSoldOut ? 'filter:grayscale(80%); opacity:0.7;' : ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${product.svgIcon}</div>`
       : product.svgIcon;
 
     return `
@@ -707,6 +999,48 @@ function renderProducts(items) {
       </div>
     </div>
   `}).join('');
+}
+
+// JSON-LD de productos para Google (sin calificaciones: solo se publican reseñas verificables)
+function updateProductSchema(products) {
+  try {
+    const base = window.location.origin + window.location.pathname.replace(/index\.html$/, '');
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      itemListElement: products.map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Product',
+          sku: p.id,
+          name: p.name,
+          description: p.desc || '',
+          category: p.categoryName || '',
+          image: p.imgUrl ? new URL(p.imgUrl, base).href : undefined,
+          brand: { '@type': 'Brand', name: p.brand || 'FIXIO Solutions' },
+          offers: {
+            '@type': 'Offer',
+            price: p.price,
+            priceCurrency: 'COP',
+            availability: (p.stock !== undefined && p.stock <= 0) ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+            itemCondition: 'https://schema.org/NewCondition',
+            seller: { '@id': base + '#org' }
+          }
+        }
+      }))
+    };
+    let tag = document.getElementById('productSchema');
+    if (!tag) {
+      tag = document.createElement('script');
+      tag.type = 'application/ld+json';
+      tag.id = 'productSchema';
+      document.head.appendChild(tag);
+    }
+    tag.textContent = JSON.stringify(data);
+  } catch (e) {
+    console.warn('[FIXIO] updateProductSchema:', e);
+  }
 }
 
 // ─── Sort Products ─────────────────────────────────────────────────────────
@@ -815,8 +1149,27 @@ function addToCart(productId) {
 
   saveCart();
   updateCartCount();
+  trackEvent('add_to_cart', { currency: 'COP', value: product.price, items: [toAnalyticsItem(product, 1)] });
   showToast(`¡${product.name} agregado al carrito!`);
   openCartDrawer();
+}
+
+// Compra directa desde la ficha: agrega (si no está) y abre el pago sin pasar por el carrito
+function buyNow(productId) {
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+  if (!cart.find(item => item.id === productId)) {
+    if (product.stock !== undefined && product.stock <= 0) {
+      showToast(`⛔ El producto "${product.name}" se encuentra AGOTADO.`);
+      return;
+    }
+    cart.push({ ...product, qty: 1 });
+    saveCart();
+    updateCartCount();
+    trackEvent('add_to_cart', { currency: 'COP', value: product.price, items: [toAnalyticsItem(product, 1)] });
+  }
+  if (typeof closeProductDetail === 'function') closeProductDetail();
+  openCheckoutModal();
 }
 
 function updateCartCount() {
@@ -1033,13 +1386,8 @@ function removeItem(id) {
 
 // Checkout Modal Flow (REQUIRES LOGIN)
 function openCheckoutModal() {
-  if (!currentUser) {
-    closeCartDrawer();
-    openAuthModal('checkout_required');
-    showToast('⚠️ Por favor inicia sesión o regístrate para proceder al pago.');
-    return;
-  }
-
+  // Compra como invitado: ya no se exige iniciar sesión para pagar
+  // (el registro obligatorio es una de las principales causas de abandono de carrito).
   if (cart.length === 0) {
     showToast('Agrega al menos un producto antes de ir al pago');
     return;
@@ -1054,12 +1402,37 @@ function openCheckoutModal() {
     if (custNameInput && !custNameInput.value) custNameInput.value = currentUser.name || '';
     if (custAddrInput && !custAddrInput.value) custAddrInput.value = currentUser.address || '';
     if (custPhoneInput && !custPhoneInput.value) custPhoneInput.value = currentUser.phone || '';
+    const custEmailInput = document.getElementById('custEmail');
+    if (custEmailInput && !custEmailInput.value) custEmailInput.value = currentUser.email || '';
   }
 
+  renderCheckoutSummary();
   updateCheckoutTotals();
+
+  const checkoutValue = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  trackEvent('begin_checkout', {
+    currency: 'COP',
+    value: checkoutValue,
+    items: cart.map(i => toAnalyticsItem(i, i.qty))
+  });
 
   document.getElementById('checkoutOverlay')?.classList.add('active');
   document.getElementById('checkoutModal')?.classList.add('active');
+}
+
+// Lista de productos dentro del modal de pago (antes solo se veía el total)
+function renderCheckoutSummary() {
+  const box = document.getElementById('checkoutItemsSummary');
+  if (!box) return;
+  box.innerHTML = `
+    <div style="background:var(--light-bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px;">
+      <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Tu pedido</div>
+      ${cart.map(i => `
+        <div style="display:flex; justify-content:space-between; gap:10px; padding:5px 0; font-size:0.87rem; border-bottom:1px solid var(--border);">
+          <span>${sanitizeHTML(i.name)} <span style="color:var(--text-muted);">×${i.qty}</span></span>
+          <strong style="white-space:nowrap;">$${formatNumber(i.price * i.qty)}</strong>
+        </div>`).join('')}
+    </div>`;
 }
 
 function updateCheckoutTotals() {
@@ -1120,14 +1493,15 @@ const NOTIFICATION_CONFIG = {
   companyPhone: '573116860336', // WhatsApp empresarial para alertas y soporte (+57 311 6860336)
   emailjsServiceId: 'service_fixio',
   emailjsAdminTemplateId: 'template_admin_order',
-  emailjsClientTemplateId: 'template_client_receipt'
+  emailjsClientTemplateId: 'template_client_receipt',
+  emailjsContactTemplateId: 'template_contact' // crear esta plantilla en EmailJS para el formulario de contacto
 };
 
 function sendOrderNotifications(order) {
   const itemsText = order.items.map(i => `• ${i.name} (x${i.qty}) - $${formatNumber(i.price * i.qty)} COP`).join('\n');
   
   // 1. EmailJS — Enviar Notificación al Correo Designado de la Empresa (Admin)
-  if (typeof emailjs !== 'undefined') {
+  if (isEmailJsReady()) {
     try {
       emailjs.send(NOTIFICATION_CONFIG.emailjsServiceId, NOTIFICATION_CONFIG.emailjsAdminTemplateId, {
         to_email: NOTIFICATION_CONFIG.companyEmail,
@@ -1303,18 +1677,36 @@ async function completeOrderRegistration(newOrder, discountAmount, finalShipping
     return;
   }
 
-  // Deduct purchased quantities from stock
+  // Deduct purchased quantities from stock and sync to Supabase
+  const stockUpdates = [];
   newOrder.items.forEach(item => {
     const prod = PRODUCTS.find(p => p.id === item.id);
     if (prod && prod.stock !== undefined) {
       prod.stock = Math.max(0, prod.stock - item.qty);
+      stockUpdates.push({ id: prod.id, stock: prod.stock });
     }
   });
   saveProducts();
+  // Sync stock a Supabase de forma concurrente (no bloquea el flujo)
+  stockUpdates.forEach(({ id, stock }) => {
+    FIXIO_BACKEND.updateProductStock(id, stock).catch(e =>
+      console.warn('[FIXIO] Error sync stock en compra:', e)
+    );
+  });
   renderProducts(PRODUCTS);
 
   // Persist Order via FIXIO_BACKEND Cloud/Local Adapter
   await FIXIO_BACKEND.saveOrder(newOrder);
+
+  trackEvent('purchase', {
+    transaction_id: newOrder.id,
+    currency: 'COP',
+    value: finalTotal,
+    shipping: finalShipping,
+    discount: discountAmount,
+    payment_type: newOrder.payment,
+    items: newOrder.items.map(i => toAnalyticsItem(i, i.qty))
+  });
 
   // Build rich order summary
   const orderSummary = document.getElementById('orderSummaryDetails');
@@ -1343,15 +1735,15 @@ async function completeOrderRegistration(newOrder, discountAmount, finalShipping
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.87rem;">
           <div>
             <div style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:2px;">Cliente</div>
-            <div style="font-weight:700;">${newOrder.customer}</div>
+            <div style="font-weight:700;">${sanitizeHTML(newOrder.customer)}</div>
           </div>
           <div>
             <div style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:2px;">Correo de Comprobante</div>
-            <div style="font-weight:700; color:var(--primary-dark);">📧 ${newOrder.email}</div>
+            <div style="font-weight:700; color:var(--primary-dark);">📧 ${sanitizeHTML(newOrder.email)}</div>
           </div>
           <div>
             <div style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:2px;">Teléfono / WhatsApp</div>
-            <div style="font-weight:700;">📱 ${newOrder.phone}</div>
+            <div style="font-weight:700;">📱 ${sanitizeHTML(newOrder.phone)}</div>
           </div>
           <div>
             <div style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:2px;">Método de Pago</div>
@@ -1359,7 +1751,7 @@ async function completeOrderRegistration(newOrder, discountAmount, finalShipping
           </div>
           <div style="grid-column:1/-1;">
             <div style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:2px;">Dirección de Entrega</div>
-            <div style="font-weight:700;">📍 ${newOrder.address}</div>
+            <div style="font-weight:700;">📍 ${sanitizeHTML(newOrder.address)}</div>
           </div>
         </div>
       </div>
@@ -1396,6 +1788,9 @@ async function completeOrderRegistration(newOrder, discountAmount, finalShipping
       `Hola FIXIO Solutions 👋 Acabo de realizar el pedido *${newOrder.id}*.\n` +
       `🔑 Código de Entrega: *${newOrder.deliveryCode}*\n` +
       `👤 Nombre: ${newOrder.customer}\n` +
+      `📱 Teléfono: ${newOrder.phone}\n` +
+      `📍 Dirección: ${newOrder.address}\n` +
+      `💳 Pago: ${newOrder.payment}\n` +
       `📦 Productos: ${itemsSummaryText}\n` +
       `💰 Total: $${formatNumber(newOrder.total)} COP\n\n` +
       `Quisiera confirmar el comprobante y el tiempo estimado de entrega. ¡Gracias!`
@@ -1466,7 +1861,8 @@ function closeSuccessModal() {
 // FAQ Toggle
 function toggleFaq(button) {
   const item = button.parentElement;
-  item.classList.toggle('active');
+  const isOpen = item.classList.toggle('active');
+  button.setAttribute('aria-expanded', String(isOpen));
 }
 
 // Toast Notifications
@@ -1521,6 +1917,7 @@ function setReviewRating(stars) {
 function openProductDetail(productId) {
   const product = PRODUCTS.find(p => p.id === productId);
   if (!product) return;
+  trackEvent('view_item', { currency: 'COP', value: product.price, items: [toAnalyticsItem(product, 1)] });
 
   const modal = document.getElementById('productDetailModal');
   const overlay = document.getElementById('productDetailOverlay');
@@ -1598,8 +1995,11 @@ function openProductDetail(productId) {
         </div>
 
         <div style="display:flex; gap:12px; margin-top:20px; flex-wrap: wrap;">
-          <button class="btn btn-accent" onclick="addToCart('${product.id}'); closeProductDetail();" style="flex:1; min-width: 200px;">
-            🛒 Agregar al Carrito — $${formatNumber(product.price)}
+          <button class="btn btn-accent" onclick="buyNow('${product.id}')" style="flex:1; min-width: 200px;">
+            Comprar ahora — $${formatNumber(product.price)}
+          </button>
+          <button class="btn btn-outline" onclick="addToCart('${product.id}'); closeProductDetail();" style="flex:1; min-width: 200px;">
+            🛒 Agregar al carrito
           </button>
           ${isAdmin ? `
             <button class="btn btn-outline" onclick="adminEditFromDetail('${product.id}')" style="flex:1; border-color:var(--primary); color:var(--primary-dark); font-weight:600; min-width: 200px;">
@@ -2300,10 +2700,23 @@ function switchAdminTab(tabName) {
   if (!container) return;
 
   if (tabName === 'products') {
+    const seedDone = safeStorage.get('fixio_seed_done');
+    const seedBtnHtml = (!seedDone && FIXIO_BACKEND.isCloudActive) ? `
+      <button onclick="FIXIO_BACKEND.seedProductsToSupabase()" style="
+        background: linear-gradient(135deg, #7C3AED, #4F46E5);
+        color: #fff; border: none; border-radius: 8px;
+        padding: 7px 14px; font-size: 0.8rem; font-weight: 700;
+        cursor: pointer; margin-right: 8px; display: inline-flex;
+        align-items: center; gap: 6px;
+      ">☁️ Subir catálogo a Supabase</button>
+    ` : (FIXIO_BACKEND.isCloudActive ? '<span style="font-size:0.75rem; color:var(--success); font-weight:600; margin-right:8px;">☁️ Sincronizado con Supabase</span>' : '');
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h4>📦 Productos en Catálogo (${PRODUCTS.length})</h4>
-        <button class="btn btn-primary" onclick="showCreateProductForm()" style="padding:8px 14px; font-size:0.85rem;">+ Crear Producto</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${seedBtnHtml}
+          <button class="btn btn-primary" onclick="showCreateProductForm()" style="padding:8px 14px; font-size:0.85rem;">+ Crear Producto</button>
+        </div>
       </div>
 
       <!-- EDIT PRODUCT FORM CONTAINER -->
@@ -3053,7 +3466,7 @@ function processFile(file, previewId, hiddenInputId) {
   reader.readAsDataURL(file);
 }
 
-function adminSaveEditProduct(event) {
+async function adminSaveEditProduct(event) {
   event.preventDefault();
   const productId = document.getElementById('editProdId').value;
   const product = PRODUCTS.find(p => p.id === productId);
@@ -3082,13 +3495,23 @@ function adminSaveEditProduct(event) {
   product.manualPdfUrl = document.getElementById('editProdPdfData').value.trim();
   product.desc = document.getElementById('editProdDesc').value.trim();
 
-  saveProducts();
+  // Persistir localmente
+  safeStorage.set('fixio_products', PRODUCTS);
   renderProducts(PRODUCTS);
+
+  // Sincronizar a Supabase
+  if (FIXIO_BACKEND.isCloudActive) {
+    showToast(`⏳ Guardando "${product.name}" en la nube...`);
+    await FIXIO_BACKEND.saveProduct(product);
+    showToast(`✅ Producto "${product.name}" guardado en Supabase ☁️ — Stock: ${product.stock} u.`);
+  } else {
+    showToast(`🎉 Producto "${product.name}" actualizado (local). Stock: ${product.stock} unidades.`);
+  }
+
   switchAdminTab('products');
-  showToast(`🎉 Producto "${product.name}" actualizado exitosamente. Stock: ${product.stock} unidades.`);
 }
 
-function adminCreateProduct(event) {
+async function adminCreateProduct(event) {
   event.preventDefault();
   const name = document.getElementById('newProdName').value;
   const category = document.getElementById('newProdCategory').value;
@@ -3129,10 +3552,20 @@ function adminCreateProduct(event) {
   };
 
   PRODUCTS.unshift(newProd);
-  saveProducts();
+  // Persistir localmente
+  safeStorage.set('fixio_products', PRODUCTS);
   renderProducts(PRODUCTS);
+
+  // Sincronizar a Supabase
+  if (FIXIO_BACKEND.isCloudActive) {
+    showToast(`⏳ Creando "${name}" en la nube...`);
+    await FIXIO_BACKEND.saveProduct(newProd);
+    showToast(`✅ Producto "${name}" creado en Supabase ☁️ con ${stock} unidades.`);
+  } else {
+    showToast(`¡Producto ${name} creado con ${stock} unidades!`);
+  }
+
   switchAdminTab('products');
-  showToast(`¡Producto ${name} creado con ${stock} unidades!`);
 }
 
 function adminUpdateOrderStatus(orderId, newStatus) {
@@ -3441,6 +3874,30 @@ window.processGoogleEmailLogin = processGoogleEmailLogin;
 
 let authIntent = 'login'; // 'login', 'checkout_required', 'admin_required'
 
+// "¿Olvidaste tu contraseña?" — envía el enlace de recuperación de Supabase al correo escrito
+async function handleForgotPassword() {
+  const email = document.getElementById('loginEmail')?.value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('✉️ Escribe tu correo en el campo de arriba y vuelve a tocar "¿Olvidaste tu contraseña?".');
+    document.getElementById('loginEmail')?.focus();
+    return;
+  }
+  if (!FIXIO_BACKEND.isCloudActive || !FIXIO_BACKEND.client) {
+    showToast('⚠️ No pudimos conectar con el servidor. Escríbenos por WhatsApp y te ayudamos.');
+    return;
+  }
+  try {
+    const { error } = await FIXIO_BACKEND.client.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw error;
+    showToast('📩 Si el correo está registrado, te enviamos un enlace para crear una nueva contraseña.');
+  } catch (e) {
+    console.warn('[FIXIO] resetPasswordForEmail:', e);
+    showToast('⚠️ No pudimos enviar el enlace. Inténtalo de nuevo en unos minutos.');
+  }
+}
+
 function openAuthModal(intent = 'login') {
   authIntent = intent;
   const overlay = document.getElementById('authOverlay');
@@ -3595,8 +4052,8 @@ if (heroSlides.length === 0) {
     {
       id: "SLIDE-001",
       tag: "🔥 BAZAR INTELIGENTE & MASCOTAS",
-      title: "Alimentador & Bebedero Automático IMIPAW 3L Wi-Fi",
-      desc: "Control por App móvil, filtrado continuo y doble fuente de energía para el cuidado de tus mascotas.",
+      title: "Alimentador Inteligente IMIPAW 3L Wi-Fi",
+      desc: "Programa las comidas desde el celular. Doble fuente de energía: sigue funcionando aunque se vaya la luz.",
       price: "$250.000 COP",
       priceOld: "$320.000 COP",
       image: "MATERIAL/banner_mascotas.png",
@@ -3605,10 +4062,10 @@ if (heroSlides.length === 0) {
     {
       id: "SLIDE-002",
       tag: "💻 ERGONOMÍA & TELETRABAJO",
-      title: "Combo Ergonómico Soporte Laptop + Lámpara Sensor",
-      desc: "Disipación térmica activa en 6 alturas e iluminación LED inteligente para tu oficina en casa.",
-      price: "$130.000 COP",
-      priceOld: "$180.000 COP",
+      title: "Soporte Ergonómico Plegable para Laptop y Celular",
+      desc: "Sube la pantalla a la altura de tus ojos y olvídate del dolor de cuello en el teletrabajo.",
+      price: "$65.000 COP",
+      priceOld: "$89.000 COP",
       image: "MATERIAL/banner_oficina.png",
       productId: "FX-003"
     },
@@ -3616,7 +4073,7 @@ if (heroSlides.length === 0) {
       id: "SLIDE-003",
       tag: "💧 SALUD Y HOGAR",
       title: "Dispensador de Agua Automático con Filtro Triple",
-      desc: "Filtración cuádruple continua y bomba ultrasilenciosa para agua 100% fresca todo el día.",
+      desc: "Filtro triple y bomba ultrasilenciosa: agua fresca todo el día para que tu mascota tome más.",
       price: "$95.000 COP",
       priceOld: "$130.000 COP",
       image: "MATERIAL/img-fx002.png",
@@ -3627,13 +4084,34 @@ if (heroSlides.length === 0) {
       tag: "💡 ILUMINACIÓN INTELIGENTE",
       title: "Lámpara LED Recargable con Sensor de Movimiento",
       desc: "Encendido automático infrarrojo sin cables para gabinetes, armarios y pasillos.",
-      price: "$48.000 COP",
+      price: "$45.000 COP",
       priceOld: "$65.000 COP",
       image: "MATERIAL/img-fx004.png",
       productId: "FX-004"
     }
   ];
   localStorage.setItem('fixio_hero_slides', JSON.stringify(heroSlides));
+} else {
+  // Migración: corrige slides antiguos guardados en caché con textos que no coincidían con el catálogo
+  const LEGACY_TITLES = {
+    'Alimentador & Bebedero Automático IMIPAW 3L Wi-Fi': { title: 'Alimentador Inteligente IMIPAW 3L Wi-Fi', desc: 'Programa las comidas desde el celular. Doble fuente de energía: sigue funcionando aunque se vaya la luz.' },
+    'Combo Ergonómico Soporte Laptop + Lámpara Sensor': { title: 'Soporte Ergonómico Plegable para Laptop y Celular', desc: 'Sube la pantalla a la altura de tus ojos y olvídate del dolor de cuello en el teletrabajo.' }
+  };
+  let migrated = false;
+  heroSlides.forEach(sl => {
+    if (LEGACY_TITLES[sl.title]) { Object.assign(sl, LEGACY_TITLES[sl.title]); migrated = true; }
+  });
+  if (migrated) localStorage.setItem('fixio_hero_slides', JSON.stringify(heroSlides));
+}
+
+// Precio del slide: siempre el del producto enlazado (evita precios distintos entre banner y catálogo)
+function slidePrices(slide) {
+  const p = (typeof PRODUCTS !== 'undefined') ? PRODUCTS.find(x => x.id === slide.productId) : null;
+  if (!p) return { price: slide.price, priceOld: slide.priceOld };
+  return {
+    price: `$${formatNumber(p.price)} COP`,
+    priceOld: p.oldPrice ? `$${formatNumber(p.oldPrice)} COP` : ''
+  };
 }
 
 let currentSlideIdx = 0;
@@ -3645,30 +4123,30 @@ function renderHeroSlider() {
 
   if (currentSlideIdx >= heroSlides.length) currentSlideIdx = 0;
 
-  const slidesHtml = heroSlides.map((slide, idx) => `
+  const slidesHtml = heroSlides.map((slide, idx) => { const sp = slidePrices(slide); return `
     <div class="hero-slide ${idx === currentSlideIdx ? 'active' : ''}">
       <div class="featured-product-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
         <span class="featured-tag">${slide.tag}</span>
         <div class="product-img-wrapper" style="height: 210px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; margin: 0 0 14px 0; background:#FAFBFD;">
-          <img src="${slide.image}" alt="${slide.title}" style="max-height: 100%; max-width: 100%; object-fit: contain;" onerror="this.style.display='none';" />
+          <img src="${optimizedImageUrl(slide.image)}" alt="${slide.title}" width="210" height="210" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" style="max-height: 100%; max-width: 100%; object-fit: contain;" onerror="this.style.display='none';" />
         </div>
         <h3 style="font-size:1.2rem; font-weight:700; color:var(--dark); margin-bottom:6px;">${slide.title}</h3>
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">${slide.desc}</p>
         <div class="price-tag" style="margin-bottom:14px;">
-          <span class="price-current">${slide.price}</span>
-          ${slide.priceOld ? `<span class="price-old">${slide.priceOld}</span>` : ''}
+          <span class="price-current">${sp.price}</span>
+          ${sp.priceOld ? `<span class="price-old">${sp.priceOld}</span>` : ''}
         </div>
         <button class="btn btn-accent" onclick="addToCart('${slide.productId}')" style="width:100%; font-weight:700;">
-          🛒 Agregar al Carrito — ${slide.price}
+          🛒 Agregar al Carrito — ${sp.price}
         </button>
       </div>
     </div>
-  `).join('');
+  `; }).join('');
 
   const arrowsHtml = heroSlides.length > 1 ? `
     <div class="hero-slider-arrows">
-      <button class="hero-slider-arrow" onclick="prevHeroSlide()" title="Anterior">❮</button>
-      <button class="hero-slider-arrow" onclick="nextHeroSlide()" title="Siguiente">❯</button>
+      <button class="hero-slider-arrow" type="button" onclick="prevHeroSlide()" title="Anterior" aria-label="Producto anterior">❮</button>
+      <button class="hero-slider-arrow" type="button" onclick="nextHeroSlide()" title="Siguiente" aria-label="Producto siguiente">❯</button>
     </div>
   ` : '';
 
